@@ -22,15 +22,59 @@ e-commerce template. All money and availability decisions are the business's aut
 ## Actors
 
 - **Visitor** (unauthenticated): views the public landing page; may begin sign-in.
-- **Customer** (authenticated via mobile-number OTP): a person or a restaurant/business
-  buyer who browses, carts, orders, and views their own order history. Customers are
-  recurring, so their profile and delivery details are saved.
+- **Customer** (authenticated via mobile-number OTP): a recurring B2B buyer — a
+  restaurant/food-service business identified by a Business/Restaurant Name and a Contact
+  Person Name — who browses, carts, orders, and views their own order history. Their
+  profile and a single default delivery address are saved so they are not re-entered.
 - **Admin user** (authenticated staff): manages catalog, pricing, offers, delivery
   configuration, settings, customers, and the order lifecycle. Multiple admins may act
   concurrently; fine-grained roles are out of scope for MVP.
 - **System** (the platform itself): issues/verifies OTPs, computes prices/fees/discounts
   authoritatively, revalidates orders at checkout, assigns order numbers, and enforces
   status transitions.
+
+## Clarifications
+
+### Session 2026-09-17
+
+- Q: C1 — When both an active product offer and an eligible quantity/wholesale tier exist
+  for the selected selling unit, which price applies? → A: Compute both the eligible active
+  offer unit price and the eligible tier unit price and apply whichever is LOWER for the
+  customer (they do NOT stack). If only one mechanism applies, use it; if neither applies,
+  use the normal active price. The final selected unit price is clearly shown. Intent: an
+  active marketing offer must never make a wholesale customer pay more than an otherwise
+  eligible tier price.
+- Q: C2 — When multiple active delivery-discount rules qualify, how is the single benefit
+  chosen? → A: Delivery discounts do NOT stack. Compute each qualifying rule's actual
+  monetary saving against the current base delivery fee and apply the single largest
+  saving. The final delivery charge can never go below zero (free delivery = a saving equal
+  to the full base fee). Ties are broken deterministically by the higher qualifying minimum
+  subtotal (the more restrictive rule). Qualification uses the eligible product subtotal,
+  excluding delivery charges.
+- Q: C3 — Order cancellation: who may cancel, and from which statuses? → A: A customer MAY
+  self-cancel only while status is New; once Confirmed, self-cancel is unavailable and the
+  customer must contact the business. Authorized admins MAY cancel from New, Confirmed,
+  Preparing, or Out for Delivery. Delivered and already-Cancelled orders cannot transition
+  to Cancelled. Cancellation retains the historical order record; an optional cancellation
+  reason MAY be stored. No complex cancellation workflow in MVP.
+- Q: C4 — Do delivery slots enforce numeric order capacity in MVP? → A: No. MVP does not
+  manage numeric capacity per slot. Slots are admin-managed and active/inactive; customers
+  select an active slot for an eligible date; if a slot becomes inactive before
+  confirmation, checkout revalidation rejects it and requires selecting another available
+  slot. Numeric per-slot capacity is future scope.
+- Q: C5 — Is the customer modeled as a person, a business, or both? → A: Primarily B2B. The
+  profile captures Business/Restaurant Name (primary commercial identity), Contact Person
+  Name (person managing the order), Login Mobile Number, WhatsApp Number, and delivery
+  details. No legal-company/KYC/tax-registration complexity in MVP.
+- Q: C6 — Should the MVP UI expose multiple saved addresses? → A: The MVP UI exposes exactly
+  ONE active/default delivery address per customer (created during onboarding, editable
+  later, auto-reused at checkout). Requirements and domain assumptions must not preclude
+  multiple saved addresses later; multiple-address selection UI is not part of MVP.
+- Q: C7 — What is the minimum-order basis? → A: The effective product subtotal — product
+  line totals after applicable product pricing, quantity tiers, and product offers —
+  excluding the delivery fee and excluding delivery discounts. Original/list prices are not
+  used when the customer pays a lower valid product price (e.g., effective products 480 +
+  delivery 60 ⇒ minimum 500 not met, 20 short).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -116,9 +160,12 @@ correct estimated line total and subtotal; changing away from a tier reverts the
    unit, **Then** pricing/tiers for the newly selected unit apply.
 4. **Given** an active offer on a product/unit, **When** the item is shown in cart,
    **Then** the offer price is clearly indicated as an offer.
-5. **Given** a unit with no quantity tiers, **When** added, **Then** a single flat unit
+5. **Given** a product/unit with both an active offer and an eligible quantity tier, **When**
+   the tier unit price is lower than the offer unit price, **Then** the tier price is applied
+   (and vice-versa); the two never combine, and the applied final unit price is shown.
+6. **Given** a unit with no quantity tiers, **When** added, **Then** a single flat unit
    price applies with no tier messaging.
-6. **Given** an item in the cart whose product/unit becomes unavailable, **When** the
+7. **Given** an item in the cart whose product/unit becomes unavailable, **When** the
    customer views the cart, **Then** the item is clearly flagged as unavailable and is
    excluded from a valid checkout until resolved.
 
@@ -210,6 +257,10 @@ rejected.
    **Then** the transition is rejected with a clear reason.
 4. **Given** many orders, **When** the admin searches/filters (e.g., by status, date, or
    customer), **Then** the matching orders are returned.
+5. **Given** an order in New, Confirmed, Preparing, or Out for Delivery, **When** an
+   authorized admin cancels it, **Then** it moves to Cancelled and its historical record is
+   retained; **When** the order is Delivered or already Cancelled, **Then** cancellation is
+   rejected.
 
 ---
 
@@ -261,8 +312,11 @@ show the correct single delivery benefit; a cart below all thresholds shows none
 3. **Given** the product subtotal is below every rule threshold, **When** at checkout,
    **Then** no delivery discount is applied.
 4. **Given** multiple rules qualify simultaneously, **When** at checkout, **Then** exactly
-   one benefit is applied (never stacked) per the agreed selection rule
-   [NEEDS CLARIFICATION: C2].
+   one benefit is applied — the rule producing the largest monetary saving against the base
+   delivery fee, ties broken by the higher qualifying minimum subtotal — never stacked.
+5. **Given** a qualifying free-delivery rule and a smaller fixed-discount rule, **When** at
+   checkout, **Then** free delivery is applied (final delivery fee 0) because it yields the
+   largest saving, and the final delivery charge is never below zero.
 
 ---
 
@@ -420,7 +474,9 @@ declared state.
 **Orders / admin**
 
 - Two admins act on the same order → status transitions must remain consistent and only
-  allowed transitions succeed [NEEDS CLARIFICATION: C3 covers cancellation specifics].
+  allowed transitions succeed. Customer self-cancel is limited to **New**; admins may cancel
+  from **New**, **Confirmed**, **Preparing**, or **Out for Delivery**; **Delivered** and
+  **Cancelled** orders cannot be cancelled.
 - Historical order must never change when catalog/pricing/delivery config later changes.
 
 ## Requirements *(mandatory)*
@@ -443,12 +499,16 @@ justified; **MAY** = optional/permitted.
   numeric thresholds are configurable; see Assumptions.
 - **FR-006**: The system MUST require first-time customers to complete a profile before
   they can place an order, and MUST NOT require returning customers to re-complete it.
-- **FR-007**: The customer profile MUST capture at least: customer/business name, login
-  mobile number, WhatsApp number, delivery area, delivery address, and address detail
-  fields (building/location, floor, apartment/shop/unit, landmark, delivery notes) where
-  applicable.
-- **FR-008**: The system MUST persist the customer's profile and delivery details so they
-  are NOT re-entered on every order.
+- **FR-007**: The customer profile MUST capture at least: Business/Restaurant Name (the
+  primary commercial identity), Contact Person Name (the person managing the order), login
+  mobile number, WhatsApp number, delivery area, delivery address, and address detail fields
+  (building/location, floor, apartment/shop/unit, landmark, delivery notes) where applicable.
+  The MVP MUST NOT introduce legal-company/KYC/tax-registration fields.
+- **FR-008**: The system MUST persist the customer's profile and a single active/default
+  delivery address so they are NOT re-entered on every order; the customer creates this
+  address during onboarding, MAY edit it later, and checkout MUST auto-reuse it. The MVP UI
+  MUST expose exactly ONE delivery address per customer; requirements MUST NOT preclude
+  multiple saved addresses in future, and multiple-address selection UI is out of MVP scope.
 - **FR-009**: The system MUST resume interrupted onboarding as incomplete and MUST prevent
   an incompletely-onboarded customer from placing an order.
 - **FR-010**: The system MUST NOT reveal OTP values in any client response or user-visible
@@ -487,9 +547,12 @@ justified; **MAY** = optional/permitted.
   while the offer is active and within its date range.
 - **FR-024**: Expired or inactive offers MUST NOT be applied, and active offers MUST be
   clearly indicated to the customer.
-- **FR-025**: The interaction/precedence between an active offer price and quantity/tier
-  pricing MUST follow an agreed rule and MUST NOT be silently assumed
-  [NEEDS CLARIFICATION: C1].
+- **FR-025**: When the selected product/unit has both an active offer and an eligible
+  quantity/wholesale tier, the system MUST compute both the eligible offer unit price and
+  the eligible tier unit price and apply whichever yields the LOWER unit price for the
+  customer; the two MUST NOT stack. If only one mechanism applies, that one MUST be used; if
+  neither applies, the normal active price MUST be used. The final selected unit price MUST
+  be clearly communicated to the customer.
 
 ### Functional Requirements — Cart
 
@@ -505,8 +568,11 @@ justified; **MAY** = optional/permitted.
 
 ### Functional Requirements — Minimum Order
 
-- **FR-030**: The system MUST enforce an admin-configurable minimum order subtotal based on
-  the product subtotal (excluding delivery fee) unless later clarified otherwise.
+- **FR-030**: The system MUST enforce an admin-configurable minimum order threshold measured
+  against the effective product subtotal — the sum of product line totals after applicable
+  product pricing, quantity tiers, and product offers — excluding the delivery fee and
+  excluding any delivery discounts. Original/list prices MUST NOT be used when the customer
+  pays a lower valid product price.
 - **FR-031**: When the subtotal is below the minimum, the system MUST prevent checkout,
   MUST show the required minimum, and SHOULD show the remaining amount to reach it.
 
@@ -523,9 +589,13 @@ justified; **MAY** = optional/permitted.
 - **FR-035**: The system MUST support admin-managed delivery discount rules of types fixed
   amount, percentage of delivery fee, and free delivery, qualified by product subtotal
   (excluding delivery fee).
-- **FR-036**: When multiple delivery discount rules qualify, the system MUST apply exactly
-  one benefit (no stacking); the exact "best rule" selection MUST follow an agreed rule
-  [NEEDS CLARIFICATION: C2].
+- **FR-036**: Delivery discount rules MUST NOT stack. When multiple rules qualify, the
+  system MUST compute each qualifying rule's actual monetary saving against the current base
+  delivery fee and apply the single rule producing the largest saving. A delivery discount
+  MUST never reduce the final delivery charge below zero (free delivery equals a saving of
+  the full base delivery fee). If two rules produce the same final saving, the system MUST
+  deterministically apply the rule with the higher qualifying minimum subtotal (the more
+  restrictive rule).
 - **FR-037**: Any applied delivery discount MUST be clearly shown to the customer in
   cart/checkout.
 
@@ -536,9 +606,11 @@ justified; **MAY** = optional/permitted.
 - **FR-039**: The system MUST handle slot unavailable, slot deactivated during checkout, no
   slots for a date, past/invalid date, and date change, blocking confirmation with clear
   guidance where the selection is not valid.
-- **FR-040**: The slot scheduling policy regarding capacity limits (whether a slot can be
-  exhausted by a number of orders) MUST be defined and MUST NOT be silently assumed
-  [NEEDS CLARIFICATION: C4].
+- **FR-040**: MVP delivery slots MUST NOT enforce numeric per-slot order capacity. Slots are
+  admin-managed with an active/inactive state, and customers MUST be able to select any
+  active slot for an eligible date. If a selected slot becomes inactive before confirmation,
+  checkout revalidation MUST reject it and require selecting another available slot. Numeric
+  per-slot capacity is explicitly future scope.
 
 ### Functional Requirements — Checkout & Order Placement
 
@@ -568,11 +640,15 @@ justified; **MAY** = optional/permitted.
 - **FR-049**: The order lifecycle statuses MUST be: **New**, **Confirmed**, **Preparing**,
   **Out for Delivery**, **Delivered**, **Cancelled**; the initial status after customer
   confirmation MUST be **New**.
-- **FR-050**: Admin users MUST be able to advance an order only through allowed transitions;
-  disallowed transitions MUST be rejected. The intended forward path is
-  New → Confirmed → Preparing → Out for Delivery → Delivered. Cancellation availability and
-  its allowed source statuses/actors MUST be defined and MUST NOT be invented
-  [NEEDS CLARIFICATION: C3].
+- **FR-050**: The system MUST enforce order status transitions; the intended forward path is
+  New → Confirmed → Preparing → Out for Delivery → Delivered, and disallowed transitions MUST
+  be rejected. Cancellation rules: a customer MAY self-cancel only while status is **New**
+  (self-cancel is unavailable once **Confirmed**; thereafter the customer must contact the
+  business outside self-service); an authorized admin MAY cancel from **New**, **Confirmed**,
+  **Preparing**, or **Out for Delivery**. **Delivered** and already-**Cancelled** orders MUST
+  NOT transition to Cancelled. Cancellation MUST retain the historical order record; an
+  optional cancellation reason MAY be stored. No further cancellation workflow is in MVP
+  scope.
 - **FR-051**: Each placed order MUST store immutable snapshots of its commercial facts —
   product name, selling unit, unit price, quantity, applied discounts, line totals, delivery
   fee, delivery discount, and final total — so later catalog/pricing/delivery changes do NOT
@@ -639,10 +715,22 @@ justified; **MAY** = optional/permitted.
 
 - **BR-001**: The server is the sole authority for all prices, fees, discounts, and totals;
   client-supplied amounts are never trusted (constitution Principle II).
-- **BR-002**: Minimum-order qualification uses product subtotal only, excluding delivery
-  fee, unless clarified otherwise (see FR-030).
-- **BR-003**: Delivery-discount qualification uses product subtotal excluding delivery fee.
-- **BR-004**: At most one delivery discount benefit applies per order (no stacking).
+- **BR-002**: Minimum-order qualification uses the effective product subtotal (product line
+  totals after applicable product pricing, quantity tiers, and offers), excluding delivery
+  fee and excluding delivery discounts (see FR-030).
+- **BR-003**: Delivery-discount qualification uses the effective product subtotal excluding
+  delivery fee and delivery discounts.
+- **BR-004**: At most one delivery discount benefit applies per order (no stacking); when
+  several qualify, the one giving the largest monetary saving against the base delivery fee
+  wins, with ties broken by the higher qualifying minimum subtotal. The final delivery
+  charge never goes below zero.
+- **BR-011**: When both an active offer and an eligible quantity tier apply to a selected
+  product/unit, the effective unit price is the LOWER of the two (never combined); if only
+  one applies it is used; if neither applies the normal active price is used.
+- **BR-012**: A customer may self-cancel only while an order is **New**; authorized admins
+  may cancel from **New**, **Confirmed**, **Preparing**, or **Out for Delivery**;
+  **Delivered** and **Cancelled** orders cannot be cancelled. Cancellation preserves the
+  immutable historical order record.
 - **BR-005**: Offers apply only within their active date range and active state; expiry
   removes the offer at the next pricing evaluation, including checkout revalidation.
 - **BR-006**: Orders are immutable commercial snapshots once placed; subsequent catalog,
@@ -657,9 +745,10 @@ justified; **MAY** = optional/permitted.
 
 ### Key Entities *(conceptual — no implementation/schema implied)*
 
-- **Customer**: an identified buyer (person or business) with contact details and saved
-  delivery information; recurring. Structure MUST allow multiple saved addresses in future
-  even if the MVP UI exposes one [NEEDS CLARIFICATION: C6].
+- **Customer**: a recurring B2B buyer identified by a Business/Restaurant Name plus a
+  Contact Person Name and login mobile number, with a WhatsApp number and saved delivery
+  information. The MVP UI exposes exactly one active/default delivery address; the structure
+  MUST allow multiple saved addresses in future. No KYC/tax-registration data in MVP.
 - **Delivery Address / Delivery Details**: area + address + building/floor/unit/landmark +
   notes associated with a customer.
 - **Category**: admin-managed grouping of products, with active state and optional ordering.
@@ -673,8 +762,8 @@ justified; **MAY** = optional/permitted.
 - **Cart / Cart Line**: customer's in-progress selection (product + unit + quantity) with
   estimated pricing.
 - **Delivery Area**: named area with active state and base delivery fee.
-- **Delivery Slot**: admin-managed date/time window selectable at checkout; capacity policy
-  to be defined [NEEDS CLARIFICATION: C4].
+- **Delivery Slot**: admin-managed date/time window with an active/inactive state,
+  selectable at checkout while active; no numeric per-slot capacity in MVP (future scope).
 - **Delivery Discount Rule**: subtotal-threshold rule granting a fixed/percentage/free
   delivery benefit.
 - **Order**: a placed, immutable record with order number, status, customer + delivery
@@ -735,34 +824,26 @@ justified; **MAY** = optional/permitted.
 - The data model must remain compatible with the documented future-growth items (see
   "Future Growth — Not MVP") without implementing them now (constitution Principle IV).
 
-## Clarifications Needed (Unresolved Business Decisions)
+## Resolved Business Decisions
 
-These are intentionally left open for `/speckit-clarify`. They are NOT decided in this
-spec, per instruction not to invent commercial rules. Referenced inline as
-[NEEDS CLARIFICATION: C#].
+All previously open decisions (C1–C7) are now resolved and recorded in the
+[Clarifications](#clarifications) session log above, and are embedded in the relevant
+requirements, business rules, acceptance scenarios, and entities:
 
-- **C1 — Offer vs. tier-pricing precedence**: When a product/unit has both an active offer
-  price and quantity/wholesale tiers, which price applies, and can they combine? (e.g.,
-  offer overrides tiers; tiers override offer; lower-of-the-two; offer applies then tiers;
-  or offers only exist on untiered units.) Referenced by FR-025.
-- **C2 — Best delivery-discount selection**: When multiple delivery discount rules qualify,
-  how is the single applied benefit chosen? (e.g., greatest customer benefit / largest fee
-  reduction; highest qualifying subtotal threshold; explicit admin priority.) Referenced by
-  FR-036 / US8.
-- **C3 — Cancellation rules**: Who may cancel an order, from which statuses, and under what
-  conditions (customer self-cancel window? admin-only? disallowed after a certain status)?
-  Referenced by FR-050.
-- **C4 — Delivery-slot capacity policy**: Do slots have capacity limits (a slot can be full
-  and become unavailable once enough orders take it), or are they always available while
-  enabled? If capacity exists, how is it counted and enforced? Referenced by FR-040.
-- **C5 — Customer account type & naming UX**: Is the customer modeled/labelled as a person,
-  a restaurant/business account, or both (affecting the name field and profile UX)?
-- **C6 — Address multiplicity in MVP UI**: Should the MVP UI expose multiple saved delivery
-  addresses, or expose a single address while the data structure preserves the future
-  multiple-address capability? Referenced by the Customer entity and FR-007/FR-008.
-- **C7 — Minimum-order basis confirmation**: Confirm the minimum-order threshold is measured
-  on product subtotal excluding delivery (assumed in BR-002), or whether any other basis is
-  intended.
+- **C1** — Offer vs. tier pricing: lower-of the two, never combined → FR-025, BR-011, US3 #5.
+- **C2** — Best delivery discount: largest monetary saving, no stacking, tie-break by higher
+  qualifying minimum subtotal, never below zero → FR-036, BR-004, US8 #4–#5.
+- **C3** — Cancellation: customer self-cancel only in New; admin cancel from
+  New/Confirmed/Preparing/Out for Delivery; not from Delivered/Cancelled; record retained →
+  FR-050, BR-012, US6 #5, Edge Cases.
+- **C4** — Delivery slots: no numeric per-slot capacity in MVP; active/inactive only;
+  revalidation rejects a deactivated slot → FR-040, Delivery Slot entity.
+- **C5** — Customer is primarily B2B: Business/Restaurant Name + Contact Person Name; no
+  KYC/tax fields → FR-007, Actors, Customer entity.
+- **C6** — Single active/default delivery address exposed in MVP UI; multiple addresses
+  preserved structurally for the future → FR-008, Customer entity.
+- **C7** — Minimum order uses the effective product subtotal (after pricing/tiers/offers),
+  excluding delivery fee and delivery discounts → FR-030, BR-002.
 
 ## Out of Scope (Explicit MVP Exclusions)
 

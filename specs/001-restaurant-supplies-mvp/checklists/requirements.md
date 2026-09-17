@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,14 +31,14 @@
 
 ## Notes
 
-- **[NEEDS CLARIFICATION] markers are intentionally retained** (C1–C7 in the
-  "Clarifications Needed" section). Per explicit user instruction, unresolved commercial
-  rules (offer vs. tier precedence, best delivery-discount selection, cancellation rules,
-  slot-capacity policy, customer account-type/naming, address multiplicity in MVP UI, and
-  minimum-order basis confirmation) MUST NOT be silently decided in this specification.
-  They are deferred to `/speckit-clarify`, which is the correct Spec Kit step to resolve
-  them. This single checklist item therefore remains open by design; all other items pass.
-- These markers do not block scope understanding: each has a reasonable stated default or
-  bounded option set, and each is isolated to a specific rule rather than the overall flow.
-- Items marked incomplete require spec updates before `/speckit-plan`. Resolve C1–C7 via
-  `/speckit-clarify` first.
+- **All items pass.** Clarifications C1–C7 were resolved via `/speckit-clarify`
+  (Session 2026-09-17) with approved product decisions and are now embedded in the
+  functional requirements, business rules, acceptance scenarios, and entities. Zero
+  `[NEEDS CLARIFICATION]` markers remain in the specification.
+- Resolved decisions: C1 offer-vs-tier lower-of pricing (FR-025/BR-011); C2 best delivery
+  discount by largest saving, no stacking, never below zero (FR-036/BR-004); C3 cancellation
+  actor/status rules (FR-050/BR-012); C4 no numeric slot capacity in MVP (FR-040); C5 B2B
+  business + contact-person profile (FR-007); C6 single default address in MVP UI, multiple
+  preserved structurally (FR-008); C7 minimum order on effective product subtotal (FR-030/
+  BR-002).
+- Specification is ready for `/speckit-plan`.
