@@ -73,18 +73,18 @@ fees/discounts, order creation/snapshots, status transitions, OTP, and checkout 
 
 **⚠️ BLOCKS all user stories.** Money, enums, formatters, localization, settings, base UI.
 
-- [ ] T013 [P] Create language-neutral enums in `src/app/Domain/Support/Enums/` — `OrderStatus`, `AvailabilityStatus`, `DiscountType`, `PaymentMethod`, `AppliedPriceSource`, `UnitCode`
-- [ ] T014 [P] Implement `Money` value object (integer minor units, EGP, plus/minus/times/compareTo/min, half-up rounding defined once) in `src/app/Domain/Support/Money.php`
-- [ ] T015 Implement `MoneyFormatter` (`444 ج`; two decimals only if piastres; Latin digits) in `src/app/Domain/Support/MoneyFormatter.php` and Blade component `src/resources/views/components/price.blade.php` (depends on T014)
-- [ ] T016 [P] Implement locale-aware date/time presentation formatter in `src/app/Domain/Support/DateTimeFormatter.php` (stored timestamps neutral)
-- [ ] T017 [P] Implement `LocalizedContent` resolver (`*_en ?: *_ar`) + `HasLocalizedText` model trait in `src/app/Domain/Support/LocalizedContent.php` and `src/app/Domain/Support/Concerns/HasLocalizedText.php` (R14)
-- [ ] T018 [P] Create Arabic translation catalogs in `src/lang/ar/` — `validation.php`, `messages.php`, `domain.php` (status/discount/availability/payment labels keyed by neutral identifier); no hard-coded UI strings
-- [ ] T019 [P] Implement `MediaService` (validated mime jpeg/png/webp, size limit, ULID path `products/{ulid}.{ext}`, thumbnail) in `src/app/Domain/Support/MediaService.php` (disk-abstracted, R18)
-- [ ] T020 [P] Create RTL base layouts — `src/resources/views/layouts/app.blade.php` (customer PWA shell) and public layout, with `dir="rtl"` + logical properties (design D1/D2)
-- [ ] T021 [P] Create reusable state components in `src/resources/views/components/states/` — `loading`, `empty`, `error` (design §13/FR-068 foundations)
-- [ ] T022 Create `settings` migration (key-value, `UNIQUE(key)`) in `src/database/migrations/` and `Setting` model in `src/app/Models/Setting.php` (data-model #17)
-- [ ] T023 Implement `SettingsService` (`minimumOrderAmount(): Money`, `businessInfo()`, `update()` with cache invalidation) in `src/app/Domain/Settings/SettingsService.php` (depends on T014, T022)
-- [ ] T024 Unit test `Money` arithmetic, rounding (half-up), min(), and formatter output in `src/tests/Unit/MoneyTest.php` (depends on T014/T015 — not parallel with them)
+- [X] T013 [P] Create language-neutral enums in `src/app/Domain/Support/Enums/` — `OrderStatus`, `AvailabilityStatus`, `DiscountType`, `PaymentMethod`, `AppliedPriceSource`, `UnitCode`
+- [X] T014 [P] Implement `Money` value object (integer minor units, EGP, plus/minus/times/compareTo/min, half-up rounding defined once) in `src/app/Domain/Support/Money.php`
+- [X] T015 Implement `MoneyFormatter` (`444 ج`; two decimals only if piastres; Latin digits) in `src/app/Domain/Support/MoneyFormatter.php` and Blade component `src/resources/views/components/price.blade.php` (depends on T014)
+- [X] T016 [P] Implement locale-aware date/time presentation formatter in `src/app/Domain/Support/DateTimeFormatter.php` (stored timestamps neutral)
+- [X] T017 [P] Implement `LocalizedContent` resolver (`*_en ?: *_ar`) + `HasLocalizedText` model trait in `src/app/Domain/Support/LocalizedContent.php` and `src/app/Domain/Support/Concerns/HasLocalizedText.php` (R14)
+- [X] T018 [P] Create Arabic translation catalogs in `src/lang/ar/` — `validation.php`, `messages.php`, `domain.php` (status/discount/availability/payment labels keyed by neutral identifier); no hard-coded UI strings
+- [X] T019 [P] Implement `MediaService` (validated mime jpeg/png/webp, size limit, ULID path `products/{ulid}.{ext}`, thumbnail) in `src/app/Domain/Support/MediaService.php` (disk-abstracted, R18)
+- [X] T020 [P] Create RTL base layouts — `src/resources/views/layouts/app.blade.php` (customer PWA shell) and public layout, with `dir="rtl"` + logical properties (design D1/D2)
+- [X] T021 [P] Create reusable state components in `src/resources/views/components/states/` — `loading`, `empty`, `error` (design §13/FR-068 foundations)
+- [X] T022 Create `settings` migration (key-value, `UNIQUE(key)`) in `src/database/migrations/` and `Setting` model in `src/app/Models/Setting.php` (data-model #17)
+- [X] T023 Implement `SettingsService` (`minimumOrderAmount(): Money`, `businessInfo()`, `update()` with cache invalidation) in `src/app/Domain/Settings/SettingsService.php` (depends on T014, T022)
+- [X] T024 Unit test `Money` arithmetic, rounding (half-up), min(), and formatter output in `src/tests/Unit/MoneyTest.php` (depends on T014/T015 — not parallel with them)
 
 **Checkpoint**: Money/enums/formatters/localization/settings usable by all stories.
 
