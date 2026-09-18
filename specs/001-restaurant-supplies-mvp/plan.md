@@ -126,62 +126,50 @@ specs/001-restaurant-supplies-mvp/
 └── tasks.md                             # Phase 2 (/speckit-tasks — NOT created here)
 ```
 
-### Source Code (repository root) — target layout for the implementation phase
+### Source Code — target layout for the implementation phase
 
-Standard Laravel 12 skeleton with a domain layer. **No files created now**; this is the agreed target
-structure `/speckit-tasks` will populate.
+**HARD CONSTRAINT (prompts 10/11):** the Laravel application lives in **`src/`** at repository root;
+spec/design/docs stay outside `src/`. Standard Laravel 12 skeleton with a domain layer. **No files
+created now**; this is the agreed target structure `/speckit-tasks` will populate.
 
 ```text
-app/
-├── Domain/                              # Business logic (Constitution I & III) — surface-agnostic
-│   ├── Auth/                            # OtpService, OtpProvider contract, LogOtpProvider (dev)
-│   ├── Customers/                       # CustomerService, profile + default address
-│   ├── Catalog/                         # CatalogService (categories, products, units, search)
-│   ├── Pricing/                         # PricingService, PriceResult, Money value object
-│   ├── Promotions/                      # PromotionService (offer validity)
-│   ├── Cart/                            # CartService, CartView
-│   ├── Delivery/                        # DeliveryService, DeliveryQuote (areas/slots/discounts)
-│   ├── Ordering/                        # OrderService, CheckoutReview, status transition validator
-│   ├── Settings/                        # SettingsService (minimum order, business info)
-│   └── Support/                         # Money, MoneyFormatter, shared enums, MediaService
-├── Http/
-│   ├── Controllers/                     # Public + customer PWA controllers (orchestrate services)
-│   ├── Requests/                        # Form Requests (validation; rules ≠ messages)
-│   └── Middleware/                      # customer guard + onboarding-complete gate
-├── Filament/                            # Admin panel (Resources/Pages/Widgets) → call services
-├── Models/                              # Thin Eloquent models
-└── Providers/                           # Bindings (OtpProvider, MediaService disk, panel)
-
-database/
-├── migrations/                         # 17 core tables + framework tables
-├── seeders/                            # admin user, demo catalog, areas/slots/discount, settings
-└── factories/
-
-resources/
-├── views/                              # Blade: landing, auth, customer PWA, components (<x-...>)
-│   └── components/                     # Header, BottomNav, ProductCard, PriceDisplay, QtySelector,
-│                                       # UnitSelector, CartItem, OrderCard, StatusBadge, form fields,
-│                                       # empty/error/loading states (design §46)
-├── js/                                 # Alpine.js (minimal), service worker registration
-├── css/                                # Tailwind (RTL/logical properties)
-└── lang/ (or /lang)                    # ar/ (default+fallback); en/ added later — no switcher in MVP
-
-public/
-├── manifest.webmanifest                # PWA manifest (Arabic; localizable later)
-├── sw.js                               # service worker (app-shell + static cache; offline fallback)
-└── icons/                              # 192/512 + maskable
-
-routes/                                 # web.php (public+customer), Filament panel provider
-tests/
-├── Unit/                               # pricing, delivery discount, minimum, Money, transitions
-└── Feature/                            # OTP, onboarding, catalog, cart, checkout revalidation,
-                                        # order creation + snapshot immutability, cancellation, admin
+restaurant-supplies-pwa/                 # repository root (spec/design/docs live here, NOT in src/)
+├── .specify/  specs/  docs/  prompts/   # planning & governance (outside src/)
+└── src/                                 # ← Laravel application root
+    ├── app/
+    │   ├── Domain/                       # Business logic (Constitution I & III) — surface-agnostic
+    │   │   ├── Auth/                     # OtpService, OtpProvider contract, LogOtpProvider (dev)
+    │   │   ├── Customers/                # CustomerService, profile + default address
+    │   │   ├── Catalog/                  # CatalogService (categories, products, units, search)
+    │   │   ├── Pricing/                  # PricingService, PriceResult
+    │   │   ├── Promotions/               # PromotionService (offer validity)
+    │   │   ├── Cart/                     # CartService, CartView
+    │   │   ├── Delivery/                 # DeliveryService, DeliveryQuote (areas/slots/discounts)
+    │   │   ├── Ordering/                 # OrderService, CheckoutReview, status transition validator
+    │   │   ├── Settings/                 # SettingsService (minimum order, business info)
+    │   │   └── Support/                  # Money, MoneyFormatter, LocalizedContent, enums, MediaService
+    │   ├── Http/{Controllers,Requests,Middleware}/   # orchestrate services; customer guard + onboarding gate
+    │   ├── Filament/{Resources,Pages,Widgets}/       # Admin panel → calls services
+    │   ├── Models/                       # Thin Eloquent models
+    │   ├── Notifications/                # NewOrderNotification (DB notification)
+    │   └── Providers/                    # Bindings (OtpProvider, MediaService disk, Filament panel)
+    ├── database/{migrations,seeders,factories}/       # 17 core tables + framework tables
+    ├── resources/
+    │   ├── views/                        # Blade: landing, auth, customer PWA, components (<x-...>)
+    │   │   └── components/               # Header, BottomNav, ProductCard, PriceDisplay, QtySelector,
+    │   │                                 # UnitSelector, CartItem, OrderCard, StatusBadge, states
+    │   ├── js/  css/                     # Alpine.js (minimal) + SW registration; Tailwind (RTL/logical)
+    ├── lang/ar/                          # default+fallback; en/ added later — no switcher in MVP
+    ├── public/                           # ← web root: manifest.webmanifest, sw.js, icons/, index.php
+    ├── routes/                           # web.php (public+customer); Filament panel provider
+    └── tests/{Unit,Feature}/            # pricing/delivery/minimum/Money/transitions; OTP/cart/checkout/orders/admin
 ```
 
-**Structure Decision**: **Single modular Laravel monolith** (Constitution I). Business rules live in
-`app/Domain/<Module>` services; `app/Http` (Blade/Alpine customer + public) and `app/Filament` (admin)
-are thin consumers of those services; a future `/api` surface can reuse them without duplication. One
-MySQL database. This is the layout `/speckit-tasks` will build against.
+**Structure Decision**: **Single modular Laravel monolith** (Constitution I) rooted at **`src/`**.
+Business rules live in `src/app/Domain/<Module>` services; `src/app/Http` (Blade/Alpine customer +
+public) and `src/app/Filament` (admin) are thin consumers; a future `/api` surface can reuse them
+without duplication. One MySQL database. This is the layout `/speckit-tasks` builds against (all
+implementation paths are `src/...`).
 
 ---
 

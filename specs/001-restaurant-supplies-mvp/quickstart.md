@@ -30,13 +30,16 @@ package; run **`composer check-platform-reqs`** as a CI/deploy gate; verify any 
 
 **Prerequs**: PHP 8.2 (+ extensions §5), Composer, MySQL 8, Node 18+ (asset build only).
 
+> **The Laravel app lives in `src/`** (hard constraint, prompts 10/11). Run all artisan/composer/npm
+> commands **from `src/`** (e.g. `cd src`). Spec/design/docs stay at the repo root, outside `src/`.
+
 ```bash
-# after Laravel app + Filament are installed in the implementation phase:
+cd src                              # Laravel application root
 composer install
 cp .env.example .env && php artisan key:generate
 # configure DB in .env (see §4), then:
 php artisan migrate --seed          # schema + demo/seed data
-php artisan storage:link            # local public image disk
+php artisan storage:link            # local public image disk (src/public/storage)
 npm install && npm run dev          # Tailwind + Alpine assets (dev)
 php artisan serve                   # http://127.0.0.1:8000  (admin at /admin)
 ```
@@ -75,8 +78,9 @@ test/static OTP behavior (§48). **No secrets in git** — only `.env.example` p
 **Required**: PHP **8.2** FPM with extensions: `intl` (Filament), `pdo_mysql`, `mbstring`, `openssl`,
 `tokenizer`, `xml`, `ctype`, `json`, `bcmath`, `fileinfo`, `gd` (or `imagick`). MySQL **8**. HTTPS.
 
-**Deploy steps** (indicative):
+**Deploy steps** (indicative — run from `src/`):
 ```bash
+cd src
 composer install --no-dev --optimize-autoloader   # platform pinned to PHP 8.2 (R0a)
 composer check-platform-reqs                       # deploy gate: fails if any dep needs PHP 8.3+
 php artisan migrate --force
@@ -85,9 +89,9 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 # assets built in CI/locally and uploaded:
 npm ci && npm run build
 ```
-**Web root** → `public/`. **Writable**: `storage/`, `bootstrap/cache`. **Cron** (single entry):
+**Web root** → `src/public/`. **Writable**: `src/storage/`, `src/bootstrap/cache`. **Cron** (single entry):
 ```
-* * * * * php /path/artisan schedule:run >> /dev/null 2>&1
+* * * * * php /path/to/src/artisan schedule:run >> /dev/null 2>&1
 ```
 **Queue = synchronous by default (R16)** — no persistent worker, no Supervisor, no Redis. The single
 cron runs **scheduled maintenance** (e.g. expired-OTP cleanup). It also drains a **database queue**

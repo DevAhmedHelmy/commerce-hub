@@ -1,0 +1,150 @@
+# =========================================================
+# Restaurant Supplies PWA - Root .gitignore
+# Laravel application lives inside /src
+# =========================================================
+
+# ---------------------------------------------------------
+# OS files
+# ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---------------------------------------------------------
+# IDE / Editor
+# ---------------------------------------------------------
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# ---------------------------------------------------------
+# Local / temporary files
+# ---------------------------------------------------------
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.cache
+*.pid
+
+# ---------------------------------------------------------
+# Claude / local AI settings
+# Keep shared project instructions/prompts tracked.
+# ---------------------------------------------------------
+.claude/settings.local.json
+.claude/*.local.json
+
+# ---------------------------------------------------------
+# Root environment / local secrets
+# ---------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# ---------------------------------------------------------
+# Laravel application - /src
+# ---------------------------------------------------------
+
+# Environment files / secrets
+src/.env
+src/.env.*
+!src/.env.example
+
+# Composer dependencies
+src/vendor/
+
+# Node dependencies
+src/node_modules/
+
+# Frontend build output
+src/public/build/
+src/public/hot
+
+# Laravel storage symlink
+src/public/storage
+
+# Framework caches / generated runtime files
+src/bootstrap/cache/*.php
+!src/bootstrap/cache/.gitignore
+
+src/storage/framework/cache/*
+!src/storage/framework/cache/.gitignore
+
+src/storage/framework/sessions/*
+!src/storage/framework/sessions/.gitignore
+
+src/storage/framework/views/*
+!src/storage/framework/views/.gitignore
+
+src/storage/framework/testing/*
+!src/storage/framework/testing/.gitignore
+
+src/storage/logs/*
+!src/storage/logs/.gitignore
+
+# Application-generated local storage
+src/storage/app/private/*
+!src/storage/app/private/.gitignore
+
+# Uploaded/public files generated at runtime
+src/storage/app/public/*
+!src/storage/app/public/.gitignore
+
+# Local SQLite / DB files, if ever used during development
+src/database/*.sqlite
+src/database/*.sqlite-shm
+src/database/*.sqlite-wal
+
+# PHPUnit / Pest output
+src/.phpunit.result.cache
+src/.phpunit.cache/
+src/.pest.cache/
+src/coverage/
+src/test-results/
+
+# PHPStan / Psalm / Pint / IDE helper generated files
+src/.phpstan.cache
+src/.php-cs-fixer.cache
+src/.php-cs-fixer.php
+src/_ide_helper.php
+src/_ide_helper_models.php
+src/.phpstorm.meta.php
+
+# Telescope / debug / temporary artifacts if introduced later
+src/storage/debugbar/
+src/storage/clockwork/
+
+# ---------------------------------------------------------
+# Package manager / tooling caches
+# ---------------------------------------------------------
+.npm/
+.pnpm-store/
+.yarn/
+.cache/
+
+# ---------------------------------------------------------
+# Local deployment / backup artifacts
+# ---------------------------------------------------------
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.sql
+*.sql.gz
+backups/
+backup/
+deploy/
+releases/
+
+# ---------------------------------------------------------
+# Never ignore these important project artifacts
+# ---------------------------------------------------------
+!.specify/
+!specs/
+!docs/
+!docs/prompts/
+!CLAUDE.md
