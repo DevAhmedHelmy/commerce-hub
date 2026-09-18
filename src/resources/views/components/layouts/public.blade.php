@@ -10,7 +10,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#137A46">
+    {{-- Filled from the --color-primary token in app.js so no brand hex lives here. --}}
+    <meta name="theme-color">
     <title>{{ $title ?? __('messages.app_name') }}</title>
 
     <link rel="manifest" href="/manifest.webmanifest">
@@ -21,7 +22,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="min-h-screen bg-surface-0 font-sans text-ink-900 antialiased">
+<body class="min-h-screen bg-canvas font-sans text-content antialiased">
     <div class="mx-auto flex min-h-screen w-full max-w-screen-xl flex-col text-start">
         {{ $slot }}
     </div>

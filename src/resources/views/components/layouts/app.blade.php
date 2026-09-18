@@ -11,7 +11,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta name="theme-color" content="#137A46">
+    {{-- Filled from the --color-primary token in app.js so no brand hex lives here. --}}
+    <meta name="theme-color">
     <title>{{ $title ?? __('messages.app_name') }}</title>
 
     <link rel="manifest" href="/manifest.webmanifest">
@@ -22,12 +23,12 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="min-h-screen bg-surface-100 font-sans text-ink-900 antialiased">
+<body class="min-h-screen bg-canvas font-sans text-content antialiased">
     {{-- Customer PWA shell: a mobile-first, centered single column. Logical spacing
          (px-*/text-start) mirrors automatically for a future LTR locale. --}}
-    <div class="mx-auto flex min-h-screen w-full max-w-screen-sm flex-col bg-surface-0">
+    <div class="mx-auto flex min-h-screen w-full max-w-screen-sm flex-col bg-surface">
         @isset($header)
-            <header class="sticky top-0 z-20 bg-surface-0/95 shadow-sm backdrop-blur">
+            <header class="sticky top-0 z-20 bg-surface/95 shadow-[var(--shadow-card)] backdrop-blur">
                 {{ $header }}
             </header>
         @endisset
@@ -37,7 +38,7 @@
         </main>
 
         @isset($nav)
-            <nav class="sticky bottom-0 z-20 bg-surface-0 shadow-[0_-2px_8px_rgba(15,23,42,0.08)]">
+            <nav class="sticky bottom-0 z-20 bg-surface shadow-[var(--shadow-elevated)]">
                 {{ $nav }}
             </nav>
         @endisset

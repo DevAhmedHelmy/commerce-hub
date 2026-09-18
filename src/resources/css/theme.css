@@ -1,0 +1,115 @@
+/*
+ * theme.css — SINGLE SOURCE OF TRUTH for all design tokens (restaurant-ui skill §2–§6).
+ *
+ * Emdad Food brand identity (blue + green). Components MUST consume the semantic tokens
+ * below (via Tailwind utilities like `bg-primary`, `text-content`, `border-border`, or
+ * `var(--color-*)`) and MUST NOT hard-code brand hex values. Changing a value here
+ * re-themes the entire application.
+ *
+ * Tokens live in Tailwind v4 `@theme` so they generate utilities; because Tailwind emits
+ * `var(--color-*)` references, the `@media (prefers-color-scheme: dark)` block further
+ * down overrides the same variables and dark mode applies globally — no `dark:` variants,
+ * no toggle, no stored preference (skill §5).
+ *
+ * Utility-name adaptation (permitted by skill §4): the skill's semantic names
+ * --color-bg / --color-text / --color-text-muted / --color-text-inverse map here to the
+ * ergonomic Tailwind utilities canvas / content / muted / inverse.
+ */
+
+@theme {
+    /* Typeface (Arabic + Latin, skill §8) */
+    --font-sans: 'Cairo', 'Noto Sans Arabic', 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial,
+        sans-serif;
+
+    /* ---- Brand palette (raw — prefer the semantic tokens below) ---- */
+    --color-brand-blue-950: #022c68;
+    --color-brand-blue-800: #03488e;
+    --color-brand-blue-600: #0264b1;
+    --color-brand-blue-400: #098fdc;
+    --color-brand-green-700: #0d7a2a;
+    --color-brand-green-500: #46a831;
+
+    /* ---- Semantic tokens (LIGHT defaults) ---- */
+    --color-primary: var(--color-brand-blue-600);
+    --color-primary-strong: var(--color-brand-blue-950);
+    --color-primary-soft: var(--color-brand-blue-400);
+
+    --color-success: var(--color-brand-green-700);
+    --color-success-soft: var(--color-brand-green-500);
+
+    --color-canvas: #f7f9fc; /* page background (skill --color-bg) */
+    --color-surface: #ffffff;
+    --color-surface-elevated: #ffffff;
+    --color-surface-muted: #f1f5f9;
+
+    --color-content: #10213d; /* body text (skill --color-text) */
+    --color-muted: #617086; /* secondary text (skill --color-text-muted) */
+    --color-inverse: #ffffff; /* text on primary/dark fills */
+
+    --color-border: #dce4ed;
+    --color-border-strong: #c4cfdc;
+
+    --color-danger: #b42318;
+    --color-warning: #b54708;
+    --color-info: var(--color-brand-blue-600);
+    --color-focus: var(--color-brand-blue-400);
+
+    /* ---- Shape ---- */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.25rem;
+
+    /* ---- Elevation ---- */
+    --shadow-card: 0 8px 24px rgb(2 44 104 / 0.08);
+    --shadow-elevated: 0 14px 36px rgb(2 44 104 / 0.14);
+}
+
+/* ---- Brand gradients (skill §7) — used intentionally, not everywhere ---- */
+:root {
+    --gradient-brand-blue: linear-gradient(135deg, var(--color-brand-blue-950) 0%, var(--color-brand-blue-600) 58%, var(--color-brand-blue-400) 100%);
+    --gradient-brand-green: linear-gradient(135deg, var(--color-brand-green-700) 0%, var(--color-brand-green-500) 100%);
+    --gradient-brand-mixed: linear-gradient(135deg, var(--color-brand-blue-950) 0%, var(--color-brand-blue-600) 52%, var(--color-brand-green-500) 100%);
+}
+
+/* ---- System dark mode (skill §5) — override the same semantic variables ---- */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-canvas: #07101d;
+        --color-surface: #0c1727;
+        --color-surface-elevated: #122238;
+        --color-surface-muted: #101d2f;
+
+        --color-content: #f3f7fb;
+        --color-muted: #a9b7c8;
+        --color-inverse: #ffffff;
+
+        --color-border: #243750;
+        --color-border-strong: #35506e;
+
+        --color-primary: #098fdc;
+        --color-primary-strong: #58bdf0;
+        --color-primary-soft: #0264b1;
+
+        --color-success: #46a831;
+        --color-success-soft: #6ccb58;
+
+        --color-focus: #58bdf0;
+
+        --shadow-card: 0 8px 28px rgb(0 0 0 / 0.28);
+        --shadow-elevated: 0 16px 42px rgb(0 0 0 / 0.38);
+    }
+}
+
+/* ---- Intentional brand-gradient utilities (skill §7) ---- */
+@layer utilities {
+    .bg-brand-gradient {
+        background-image: var(--gradient-brand-blue);
+    }
+    .bg-brand-gradient-green {
+        background-image: var(--gradient-brand-green);
+    }
+    .bg-brand-gradient-mixed {
+        background-image: var(--gradient-brand-mixed);
+    }
+}
