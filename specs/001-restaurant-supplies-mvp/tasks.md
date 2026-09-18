@@ -52,18 +52,18 @@ fees/discounts, order creation/snapshots, status transitions, OTP, and checkout 
 
 **Purpose**: Stand up the Laravel 12 app inside `src/` with the verified stack. No business features.
 
-- [ ] T001 Create `src/` directory at repository root (Laravel application root per hard constraint)
-- [ ] T002 Install Laravel **12.x** into `src/` (`composer create-project laravel/laravel:^12.0 .` run inside `src/`); confirm `src/public/index.php` is the web entry
-- [ ] T003 Pin production runtime in `src/composer.json` — add `config.platform.php = 8.2.x` and a `check-platform-reqs` composer script; verify `require php: ^8.2` (R0a)
-- [ ] T004 Configure `src/.env` and `src/.env.example` — `APP_LOCALE=ar`, `APP_FALLBACK_LOCALE=ar`, `APP_TIMEZONE`, MySQL vars, `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=sync`, `FILESYSTEM_DISK=public`, `OTP_DRIVER=log` (no secrets committed)
-- [ ] T005 Configure MySQL 8 connection with `utf8mb4` / `utf8mb4_unicode_ci` defaults in `src/config/database.php`
-- [ ] T006 Set Arabic default + fallback locale and RTL-aware config in `src/config/app.php` (and locale bootstrapping)
-- [ ] T007 [P] Install & configure Tailwind CSS + Alpine.js via Vite — `src/vite.config.js`, `src/tailwind.config.js` (logical/RTL-friendly), `src/resources/css/app.css`, `src/resources/js/app.js`
-- [ ] T008 Install **Filament v5** (`composer require filament/filament:^5.8`) and generate the admin panel provider `src/app/Providers/Filament/AdminPanelProvider.php` (path `/admin`, guard `users`, Arabic/RTL); ensure `ext-intl` documented
-- [ ] T009 [P] Install **Pest** dev tooling (`composer require --dev pestphp/pest pestphp/pest-plugin-laravel`) and initialize `src/tests/Pest.php`, `src/phpunit.xml` with a MySQL test connection
-- [ ] T010 [P] Run `php artisan storage:link` and confirm the local `public` disk for media (R18)
-- [ ] T011 Add PWA foundation stubs — routes for `/manifest.webmanifest` and `/offline`, and SW registration hook in `src/resources/js/app.js` (full SW in Phase M)
-- [ ] T012 [P] Align `docs`/quickstart references to the `src/` layout in project `README.md` (outside `src/`)
+- [X] T001 Create `src/` directory at repository root (Laravel application root per hard constraint)
+- [X] T002 Install Laravel **12.x** into `src/` (`composer create-project laravel/laravel:^12.0 .` run inside `src/`); confirm `src/public/index.php` is the web entry
+- [X] T003 Pin production runtime in `src/composer.json` — add `config.platform.php = 8.2.x` and a `check-platform-reqs` composer script; verify `require php: ^8.2` (R0a)
+- [X] T004 Configure `src/.env` and `src/.env.example` — `APP_LOCALE=ar`, `APP_FALLBACK_LOCALE=ar`, `APP_TIMEZONE`, MySQL vars, `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=sync`, `FILESYSTEM_DISK=public`, `OTP_DRIVER=log` (no secrets committed)
+- [X] T005 Configure MySQL 8 connection with `utf8mb4` / `utf8mb4_unicode_ci` defaults in `src/config/database.php`
+- [X] T006 Set Arabic default + fallback locale and RTL-aware config in `src/config/app.php` (and locale bootstrapping)
+- [X] T007 [P] Install & configure Tailwind CSS + Alpine.js via Vite — `src/vite.config.js`, `src/tailwind.config.js` (logical/RTL-friendly), `src/resources/css/app.css`, `src/resources/js/app.js`
+- [X] T008 Install **Filament v5** (`composer require filament/filament:^5.8`) and generate the admin panel provider `src/app/Providers/Filament/AdminPanelProvider.php` (path `/admin`, guard `users`, Arabic/RTL); ensure `ext-intl` documented
+- [X] T009 [P] Install **Pest** dev tooling (`composer require --dev pestphp/pest pestphp/pest-plugin-laravel`) and initialize `src/tests/Pest.php`, `src/phpunit.xml` with a MySQL test connection
+- [X] T010 [P] Run `php artisan storage:link` and confirm the local `public` disk for media (R18)
+- [X] T011 Add PWA foundation stubs — routes for `/manifest.webmanifest` and `/offline`, and SW registration hook in `src/resources/js/app.js` (full SW in Phase M)
+- [X] T012 [P] Align `docs`/quickstart references to the `src/` layout in project `README.md` (outside `src/`)
 
 **Checkpoint**: `php artisan serve` runs from `src/`; `/admin` loads Filament login; assets build.
 
