@@ -97,22 +97,22 @@ fees/discounts, order creation/snapshots, status transitions, OTP, and checkout 
 
 ### Tests (MANDATORY)
 
-- [ ] T025 [P] [US1] Feature test OTP request/verify happy path + `needs_onboarding` in `src/tests/Feature/Auth/OtpFlowTest.php`
-- [ ] T026 [P] [US1] Feature test OTP edge cases — expired, invalid code, already-consumed, resend cooldown, attempt limit, request rate limit in `src/tests/Feature/Auth/OtpAbuseTest.php`
-- [ ] T027 [P] [US1] Feature test onboarding gating — incomplete customer blocked from ordering; returning customer skips profile in `src/tests/Feature/Auth/OnboardingGateTest.php`
+- [X] T025 [P] [US1] Feature test OTP request/verify happy path + `needs_onboarding` in `src/tests/Feature/Auth/OtpFlowTest.php`
+- [X] T026 [P] [US1] Feature test OTP edge cases — expired, invalid code, already-consumed, resend cooldown, attempt limit, request rate limit in `src/tests/Feature/Auth/OtpAbuseTest.php`
+- [X] T027 [P] [US1] Feature test onboarding gating — incomplete customer blocked from ordering; returning customer skips profile in `src/tests/Feature/Auth/OnboardingGateTest.php`
 
 ### Implementation
 
-- [ ] T028 [P] [US1] Create migrations `customers`, `customer_addresses`, `otp_verifications` in `src/database/migrations/` (data-model #2, #3, #16; indexes `UNIQUE(phone)`, `INDEX(phone,expires_at)`)
-- [ ] T029 [P] [US1] Create models `Customer`, `CustomerAddress`, `OtpVerification` in `src/app/Models/` (Customer soft-deletes; casts; relations)
-- [ ] T030 [US1] Configure the `customer` auth guard + provider (session) in `src/config/auth.php`; keep `users` guard for admin (R8)
-- [ ] T031 [P] [US1] Define `OtpProvider` contract in `src/app/Domain/Auth/Contracts/OtpProvider.php` and `LogOtpProvider` (dev/demo, non-prod) in `src/app/Domain/Auth/Providers/LogOtpProvider.php`; bind by `OTP_DRIVER` in a service provider
-- [ ] T032 [US1] Implement `OtpService::request()` / `verify()` — hashed code, expiry, one-time consume, resend cooldown, request rate limit, verify attempt limit/lockout, distinguish incorrect vs expired, never log the code in prod — in `src/app/Domain/Auth/OtpService.php` (depends on T028, T031)
-- [ ] T033 [US1] Implement `CustomerService` (`findOrCreateByPhone`, `completeOnboarding`, `setDefaultAddress`, `updateDefaultAddress`, `canPlaceOrders`) in `src/app/Domain/Customers/CustomerService.php` (depends on T029)
-- [ ] T034 [P] [US1] Form Requests (rules separate from Arabic messages) — `RequestOtpRequest`, `VerifyOtpRequest`, `CompleteProfileRequest`, `SaveAddressRequest` in `src/app/Http/Requests/Auth/`
-- [ ] T035 [US1] Auth controllers + routes (`/login`, `/otp/request`, `/verify`, `/otp/verify`, `/otp/resend`, `/onboarding/profile`, `/onboarding/address`) in `src/app/Http/Controllers/Auth/` and `src/routes/web.php` (rate-limited, CSRF)
-- [ ] T036 [US1] `onboarding-complete` middleware gate for customer ordering routes in `src/app/Http/Middleware/EnsureOnboarded.php` (FR-009)
-- [ ] T037 [P] [US1] Blade screens C02 phone, C03 OTP (resend/cooldown), C04 profile, C05 address in `src/resources/views/auth/` (RTL, states)
+- [X] T028 [P] [US1] Create migrations `customers`, `customer_addresses`, `otp_verifications` in `src/database/migrations/` (data-model #2, #3, #16; indexes `UNIQUE(phone)`, `INDEX(phone,expires_at)`)
+- [X] T029 [P] [US1] Create models `Customer`, `CustomerAddress`, `OtpVerification` in `src/app/Models/` (Customer soft-deletes; casts; relations)
+- [X] T030 [US1] Configure the `customer` auth guard + provider (session) in `src/config/auth.php`; keep `users` guard for admin (R8)
+- [X] T031 [P] [US1] Define `OtpProvider` contract in `src/app/Domain/Auth/Contracts/OtpProvider.php` and `LogOtpProvider` (dev/demo, non-prod) in `src/app/Domain/Auth/Providers/LogOtpProvider.php`; bind by `OTP_DRIVER` in a service provider
+- [X] T032 [US1] Implement `OtpService::request()` / `verify()` — hashed code, expiry, one-time consume, resend cooldown, request rate limit, verify attempt limit/lockout, distinguish incorrect vs expired, never log the code in prod — in `src/app/Domain/Auth/OtpService.php` (depends on T028, T031)
+- [X] T033 [US1] Implement `CustomerService` (`findOrCreateByPhone`, `completeOnboarding`, `setDefaultAddress`, `updateDefaultAddress`, `canPlaceOrders`) in `src/app/Domain/Customers/CustomerService.php` (depends on T029)
+- [X] T034 [P] [US1] Form Requests (rules separate from Arabic messages) — `RequestOtpRequest`, `VerifyOtpRequest`, `CompleteProfileRequest`, `SaveAddressRequest` in `src/app/Http/Requests/Auth/`
+- [X] T035 [US1] Auth controllers + routes (`/login`, `/otp/request`, `/verify`, `/otp/verify`, `/otp/resend`, `/onboarding/profile`, `/onboarding/address`) in `src/app/Http/Controllers/Auth/` and `src/routes/web.php` (rate-limited, CSRF)
+- [X] T036 [US1] `onboarding-complete` middleware gate for customer ordering routes in `src/app/Http/Middleware/EnsureOnboarded.php` (FR-009)
+- [X] T037 [P] [US1] Blade screens C02 phone, C03 OTP (resend/cooldown), C04 profile, C05 address in `src/resources/views/auth/` (RTL, states)
 
 **Checkpoint**: US1 fully functional and independently testable.
 
