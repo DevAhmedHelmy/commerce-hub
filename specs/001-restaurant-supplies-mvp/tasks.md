@@ -126,21 +126,21 @@ fees/discounts, order creation/snapshots, status transitions, OTP, and checkout 
 
 ### Tests (MANDATORY where commercial/behavioral)
 
-- [ ] T038 [P] [US2] Feature test catalog browse + availability rules (OoS visible-unorderable, inactive hidden, empty category state) in `src/tests/Feature/Catalog/BrowseTest.php`
-- [ ] T039 [P] [US2] Feature test search by Arabic name + brand, with empty-result state, in `src/tests/Feature/Catalog/SearchTest.php`
+- [X] T038 [P] [US2] Feature test catalog browse + availability rules (OoS visible-unorderable, inactive hidden, empty category state) in `src/tests/Feature/Catalog/BrowseTest.php`
+- [X] T039 [P] [US2] Feature test search by Arabic name + brand, with empty-result state, in `src/tests/Feature/Catalog/SearchTest.php`
 
 ### Implementation
 
-- [ ] T040 [P] [US5] Migrations `categories`, `products`, `product_units` in `src/database/migrations/` — paired `*_ar`/`*_en` managed columns, single `brand`, `availability` enum, indexes `products(category_id,availability,sort_order)`, `products(name_ar)`, `products(brand)`, `product_units(product_id,is_active,sort_order)` (data-model #4,#5,#6; R14)
-- [ ] T041 [P] [US5] Models `Category`, `Product`, `ProductUnit` (use `HasLocalizedText`; relations; casts; default-unit guard) in `src/app/Models/`
-- [ ] T042 [US2] Implement `CatalogService` (`activeCategories`, `productsInCategory` paginated, `search` name_ar/brand, `productDetail` with units+availability) in `src/app/Domain/Catalog/CatalogService.php` (depends on T041)
+- [X] T040 [P] [US5] Migrations `categories`, `products`, `product_units` in `src/database/migrations/` — paired `*_ar`/`*_en` managed columns, single `brand`, `availability` enum, indexes `products(category_id,availability,sort_order)`, `products(name_ar)`, `products(brand)`, `product_units(product_id,is_active,sort_order)` (data-model #4,#5,#6; R14)
+- [X] T041 [P] [US5] Models `Category`, `Product`, `ProductUnit` (use `HasLocalizedText`; relations; casts; default-unit guard) in `src/app/Models/`
+- [X] T042 [US2] Implement `CatalogService` (`activeCategories`, `productsInCategory` paginated, `search` name_ar/brand, `productDetail` with units+availability) in `src/app/Domain/Catalog/CatalogService.php` (depends on T041)
 - [ ] T043 [P] [US5] Filament `CategoryResource` (CRUD, active toggle, reorder) in `src/app/Filament/Resources/CategoryResource.php` (A07)
 - [ ] T044a [US5] Filament `ProductResource` core + General tab (category, `name_ar`/`name_en`, `brand`, `description_ar`/`description_en`, sort, list with availability column) in `src/app/Filament/Resources/ProductResource.php` (A08/A09; no business logic)
 - [ ] T044b [US5] Product Media tab (image upload via `MediaService`) + Availability quick-toggle (available/out_of_stock/inactive) in `src/app/Filament/Resources/ProductResource.php` + `src/app/Filament/Resources/ProductResource/Pages/` (depends on T044a, T019)
 - [ ] T044c [US5] Selling Units relation manager (code, `display_name_ar`/`display_name_en`, package desc, `base_price`, default/active/sort) in `src/app/Filament/Resources/ProductResource/RelationManagers/UnitsRelationManager.php` (depends on T044a, T041)
-- [ ] T045 [P] [US2] Customer catalog controllers + routes `/home` (C06), `/categories` + `/categories/{category}` (C08), `/search` (C07), `/products/{product}` (C09) in `src/app/Http/Controllers/Catalog/` and `src/routes/web.php`
-- [ ] T046 [P] [US2] Blade views + components — home hub, category listing, search results, product detail (unit selector, availability badge) in `src/resources/views/catalog/` and `src/resources/views/components/` (ProductCard **does NOT add to cart**; add happens on detail — prompt §Phase D)
-- [ ] T047 [US2] Wire listing cards to `PricingService::baselineFromPrice` placeholder (lightweight "from" price only; full pricing in Phase E) — mark card price integration point in `src/resources/views/components/product-card.blade.php`
+- [X] T045 [P] [US2] Customer catalog controllers + routes `/home` (C06), `/categories` + `/categories/{category}` (C08), `/search` (C07), `/products/{product}` (C09) in `src/app/Http/Controllers/Catalog/` and `src/routes/web.php`
+- [X] T046 [P] [US2] Blade views + components — home hub, category listing, search results, product detail (unit selector, availability badge) in `src/resources/views/catalog/` and `src/resources/views/components/` (ProductCard **does NOT add to cart**; add happens on detail — prompt §Phase D)
+- [X] T047 [US2] Wire listing cards to `PricingService::baselineFromPrice` placeholder (lightweight "from" price only; full pricing in Phase E) — mark card price integration point in `src/resources/views/components/product-card.blade.php`
 
 **Checkpoint**: Admin-created catalog is browsable/searchable by customers with correct states.
 

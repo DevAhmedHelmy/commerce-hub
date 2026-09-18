@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\OtpController;
+use App\Http\Controllers\Catalog\CatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,8 +37,14 @@ Route::middleware('auth:customer')->group(function () {
     Route::get('/onboarding/address', [OnboardingController::class, 'showAddress'])->name('onboarding.address');
     Route::post('/onboarding/address', [OnboardingController::class, 'saveAddress'])->name('onboarding.address.save');
 
-    // Ordering entry — onboarding-gated. Phase D (T045) replaces this with the real home hub (C06).
-    Route::get('/home', fn () => view('home'))->middleware('onboarded')->name('home');
+    // Customer catalog (US2) — onboarding-gated ordering surface.
+    Route::middleware('onboarded')->group(function () {
+        Route::get('/home', [CatalogController::class, 'home'])->name('home');
+        Route::get('/categories', [CatalogController::class, 'categories'])->name('categories.index');
+        Route::get('/categories/{category}', [CatalogController::class, 'category'])->name('categories.show');
+        Route::get('/search', [CatalogController::class, 'search'])->name('search');
+        Route::get('/products/{product}', [CatalogController::class, 'product'])->name('products.show');
+    });
 });
 
 /*
