@@ -134,15 +134,54 @@ fees/discounts, order creation/snapshots, status transitions, OTP, and checkout 
 - [X] T040 [P] [US5] Migrations `categories`, `products`, `product_units` in `src/database/migrations/` — paired `*_ar`/`*_en` managed columns, single `brand`, `availability` enum, indexes `products(category_id,availability,sort_order)`, `products(name_ar)`, `products(brand)`, `product_units(product_id,is_active,sort_order)` (data-model #4,#5,#6; R14)
 - [X] T041 [P] [US5] Models `Category`, `Product`, `ProductUnit` (use `HasLocalizedText`; relations; casts; default-unit guard) in `src/app/Models/`
 - [X] T042 [US2] Implement `CatalogService` (`activeCategories`, `productsInCategory` paginated, `search` name_ar/brand, `productDetail` with units+availability) in `src/app/Domain/Catalog/CatalogService.php` (depends on T041)
-- [ ] T043 [P] [US5] Filament `CategoryResource` (CRUD, active toggle, reorder) in `src/app/Filament/Resources/CategoryResource.php` (A07)
-- [ ] T044a [US5] Filament `ProductResource` core + General tab (category, `name_ar`/`name_en`, `brand`, `description_ar`/`description_en`, sort, list with availability column) in `src/app/Filament/Resources/ProductResource.php` (A08/A09; no business logic)
-- [ ] T044b [US5] Product Media tab (image upload via `MediaService`) + Availability quick-toggle (available/out_of_stock/inactive) in `src/app/Filament/Resources/ProductResource.php` + `src/app/Filament/Resources/ProductResource/Pages/` (depends on T044a, T019)
-- [ ] T044c [US5] Selling Units relation manager (code, `display_name_ar`/`display_name_en`, package desc, `base_price`, default/active/sort) in `src/app/Filament/Resources/ProductResource/RelationManagers/UnitsRelationManager.php` (depends on T044a, T041)
+- [X] T043 [P] [US5] Filament `CategoryResource` (CRUD, active toggle, reorder) in `src/app/Filament/Resources/CategoryResource.php` (A07)
+- [X] T044a [US5] Filament `ProductResource` core + General tab (category, `name_ar`/`name_en`, `brand`, `description_ar`/`description_en`, sort, list with availability column) in `src/app/Filament/Resources/ProductResource.php` (A08/A09; no business logic)
+- [X] T044b [US5] Product Media tab (image upload via `MediaService`) + Availability quick-toggle (available/out_of_stock/inactive) in `src/app/Filament/Resources/ProductResource.php` + `src/app/Filament/Resources/ProductResource/Pages/` (depends on T044a, T019)
+- [X] T044c [US5] Selling Units relation manager (code, `display_name_ar`/`display_name_en`, package desc, `base_price`, default/active/sort) in `src/app/Filament/Resources/ProductResource/RelationManagers/UnitsRelationManager.php` (depends on T044a, T041)
 - [X] T045 [P] [US2] Customer catalog controllers + routes `/home` (C06), `/categories` + `/categories/{category}` (C08), `/search` (C07), `/products/{product}` (C09) in `src/app/Http/Controllers/Catalog/` and `src/routes/web.php`
 - [X] T046 [P] [US2] Blade views + components — home hub, category listing, search results, product detail (unit selector, availability badge) in `src/resources/views/catalog/` and `src/resources/views/components/` (ProductCard **does NOT add to cart**; add happens on detail — prompt §Phase D)
 - [X] T047 [US2] Wire listing cards to `PricingService::baselineFromPrice` placeholder (lightweight "from" price only; full pricing in Phase E) — mark card price integration point in `src/resources/views/components/product-card.blade.php`
 
 **Checkpoint**: Admin-created catalog is browsable/searchable by customers with correct states.
+
+---
+
+## Phase D2 — Simple Inventory (prompt 32, CORE MVP amendment)
+
+**Purpose**: per-selling-unit integer stock, admin adjust + history, stock-driven availability, and
+transactional order deduction / cancellation restore. Supersedes "inventory out of MVP" (R24, FR-071..FR-078).
+
+> **Sequencing**: **D2a–D2e** (schema/service/admin) implement with/after Phase D. **D2f–D2j**
+> (cart/checkout/placement/cancellation hooks + integration tests) implement **inside** their coupled
+> phases (F/H/I/J) when those run — each notes its coupling. Deduction/restore must NOT be built before
+> the order transaction exists (Phase I).
+
+### Foundation (with Phase D)
+
+- [X] T144 [P] [US5] Migration: add `stock_quantity INT UNSIGNED default 0` (+ nullable `low_stock_threshold`) to `product_units`, and create `inventory_adjustments` (data-model #6/#18: type, quantity_delta, quantity_before, quantity_after, reason, reference_type/id, performed_by→users nullOnDelete, created_at; indexes `(product_unit_id,created_at)`, `(reference_type,reference_id)`, `(type)`) in `src/database/migrations/`
+- [X] T145 [P] [US5] `InventoryAdjustment` model (immutable; casts; relations to `ProductUnit`/`User`) in `src/app/Models/InventoryAdjustment.php`; add `stock_quantity`/`low_stock_threshold` to `ProductUnit` fillable/casts + `isInStock()` helper
+- [X] T146 [US5] `InventoryService` (`currentStock`, `hasStockFor`, `adjust()` with `lockForUpdate` + non-negative guard + history write, `deductForOrder()`, `restoreForCancellation()`) in `src/app/Domain/Inventory/InventoryService.php` + `AdjustInventoryAction` (depends on T144/T145)
+- [X] T147 [US5] Authoritative availability refactor: unit orderable iff `is_active AND stock_quantity > 0`; reconcile with product `availability` enum (document one rule, FR-074) across `CatalogService`/models/badges — no manual OoS toggle needed when stock hits 0
+- [X] T148 [US5] Filament Product **Stock** tab + inventory actions (إضافة/خصم/تصحيح المخزون: qty + reason + current + preview, block <0) calling `InventoryService`, and **read-only** adjustment-history table, in `src/app/Filament/Resources/Products/...`; stock column + in/out-of-stock filter (A09/A15)
+- [X] T149 [P] [US5] Unit tests: manual add/remove, cannot reduce below zero, adjustment history recorded (initial/manual) in `src/tests/Unit/Inventory/AdjustmentTest.php`
+
+### Integration (inside coupled phases)
+
+- [ ] T150 [US3] *(Phase F/cart)* Cart view flags a line whose requested qty exceeds unit stock; cart is **not** a reservation; excluded from valid checkout — in `CartService`/`CartView`
+- [ ] T151 [US4] *(Phase H/checkout)* Checkout revalidation adds an `insufficient_stock` blocker/change when stock < requested; forces re-review — in `CheckoutRevalidator`
+- [ ] T152 [US4] *(Phase I/placement)* `OrderService::place` calls `InventoryService::deductForOrder` inside the TX (lock rows, verify all lines, decrement, write `order` adjustments); shortfall aborts with no partial deduction — in `src/app/Domain/Ordering/OrderService.php`
+- [ ] T153 [US6] *(Phase J/lifecycle)* Eligible-cancellation restore via `InventoryService::restoreForCancellation` (idempotent `order_cancel_restore`; never for delivered/cancelled) wired into `OrderService::transition`
+- [ ] T154 [US6] *(Phase K/dashboard)* Optional out-of-stock units count widget/indicator (only if consistent with dashboard design)
+
+### Mandatory inventory tests (with coupled phases / Phase N)
+
+- [ ] T155 [P] [US4] Feature: stock zero ⇒ unit unavailable (add-to-cart + checkout reject) in `src/tests/Feature/Inventory/AvailabilityTest.php`
+- [ ] T156 [P] [US4] Feature: order deducts stock; multi-line deducts atomically; failed order rolls back deduction in `src/tests/Feature/Inventory/OrderDeductionTest.php`
+- [ ] T157 [P] [US4] Feature/integration: concurrent orders cannot oversell (row-lock) in `src/tests/Feature/Inventory/ConcurrencyTest.php`
+- [ ] T158 [P] [US6] Feature: cancellation restores stock once (idempotent); delivered order cannot restore in `src/tests/Feature/Inventory/CancellationRestoreTest.php`
+
+**Checkpoint**: stock is per-unit, admin-manageable with audit history, stock-driven availability holds,
+orders never oversell, and cancellations restore exactly once.
 
 ---
 

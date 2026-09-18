@@ -7,7 +7,7 @@
 Conceptual surface map (no routes/controllers/resources created). Route **names/paths are
 language-neutral** (§18); UI copy is localized (Arabic MVP). All controllers/Filament actions
 **orchestrate services** (Principle III) — no business rules here. Screen IDs (C01–C17) map to
-[screen-specifications.md]; admin IDs (A01–A14) map to [admin-design.md].
+[screen-specifications.md]; admin IDs (A01–A15) map to [admin-design.md].
 
 ## Guards / middleware
 - **`web`** (public + admin) and **`customer`** guard (session, OTP-authenticated) — separate
@@ -84,24 +84,30 @@ Arabic-first (RTL). Every action **calls domain services**; no rule duplication 
 | Admin ID | Filament surface | Purpose | Service(s) |
 |---|---|---|---|
 | A01 | Panel login | staff auth (`users`) | — |
-| A02 | Dashboard (widgets) | new/today/recent orders + indicators; **polling** (no WS) | Order queries |
+| A02 | Dashboard (widgets) | new/today/recent orders + indicators (+ **out-of-stock units count**); **polling** (no WS) | Order queries / InventoryService |
 | A03 | Orders — List (filters: status/date/area/search) | triage/manage | OrderService/queries |
 | A04 | Orders — View/Edit (status actions) | details + **status transition** + cancel-if-allowed | OrderService.transition |
 | A05 | Customers — List (search) | directory | queries |
 | A06 | Customers — View (+ order history) | profile + orders | queries |
 | A07 | Categories Resource | CRUD + active + reorder | CatalogService/model |
 | A08 | Products — List (availability quick-toggle) | catalog mgmt | CatalogService |
-| A09 | Products — Edit (**tabs**: General/Media/Selling Units/Pricing/Offers/Availability) | product + units + tiers + offers | Catalog/Pricing/Promotion |
+| A09 | Products — Edit (**tabs**: General/Media/Selling Units/Pricing/Offers/Availability/**Stock**) | product + units + tiers + offers + **per-unit stock + adjust** | Catalog/Pricing/Promotion/**Inventory** |
 | A10 | Offers Resource (cross-product) | manage offers | PromotionService |
 | A11 | Delivery Areas Resource | name/base_fee/active | model |
 | A12 | Delivery Slots Resource | label/day_of_week/start_time/end_time/active/sort (no capacity) | model |
 | A13 | Delivery Discount Rules Resource | type/value/min_subtotal/active | model/DeliveryService validation |
 | A14 | Settings Page | minimum order + business/contact info | SettingsService |
+| A15 | Inventory (prompt 32) | per-unit **stock column**, add/remove/correct actions (qty + reason + preview, never < 0), **read-only adjustment history**, in-/out-of-stock filter | InventoryService / AdjustInventoryAction |
 
 Notes: **status change** (A04) is the highest-frequency op → one-click next-status + cancel via
 `OrderService::transition` (validated, R10). **Availability toggle** (A08) inline. Product admin is
 **tabbed** (A09), never one giant form (admin-design §8). Filament uses database **notifications +
 polling** for new-order visibility (R16/FR-055). New orders visible without WebSockets.
+**Inventory (prompt 32):** stock is deducted inside `OrderService::place` via
+`InventoryService::deductForOrder` (row-locked, no overselling) and restored on eligible
+cancellation via `InventoryService::restoreForCancellation` (idempotent). Customer add-to-cart and
+checkout reject a unit with `stock_quantity = 0` or a requested qty exceeding stock (Arabic message,
+no silent qty reduction); exact quantities are admin-only.
 
 ## Future API (not built in MVP, readiness only)  `[Principle I, §29]`
 The same services back a future JSON API (`/api/*`, token/Sanctum) for a Flutter app — no business

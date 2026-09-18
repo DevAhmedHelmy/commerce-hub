@@ -23,9 +23,20 @@ class ProductUnitFactory extends Factory
             'display_name_ar' => 'كيس',
             'display_name_en' => null,
             'base_price' => 10000, // 100 EGP in minor units
+            'stock_quantity' => 100,
             'is_active' => true,
             'is_default' => true,
             'sort_order' => 0,
         ];
+    }
+
+    public function outOfStock(): static
+    {
+        return $this->state(fn (): array => ['stock_quantity' => 0]);
+    }
+
+    public function stock(int $quantity): static
+    {
+        return $this->state(fn (): array => ['stock_quantity' => $quantity]);
     }
 }

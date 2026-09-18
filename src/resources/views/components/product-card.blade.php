@@ -24,7 +24,7 @@
     <p class="text-sm font-semibold text-content" dir="auto">{{ $product->localized('name') }}</p>
 
     <div class="mt-1">
-        <x-availability-badge :status="$product->availability" />
+        <x-availability-badge :status="$product->displayAvailability()" />
     </div>
 
     @if ($unit)

@@ -13,9 +13,11 @@ identifiers use ULIDs.
 where soft-delete is justified (below). All **domain identifiers are language-neutral** (statuses,
 unit `code`, discount `type`) — Arabic/English are presentation labels, not stored business values.
 
-**Core MVP tables: 17** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
-`failed_jobs`, `job_batches`, `migrations`, `password_reset_tokens` for admins,
-`notifications` is listed as #17).
+**Core MVP tables: 18** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
+`failed_jobs`, `job_batches`, `migrations`, `password_reset_tokens` for admins;
+`notifications` is a framework table surfaced for admin new-order alerts). **Simple
+inventory (prompt 32, core MVP)** adds `inventory_adjustments` (#18) and a
+`product_units.stock_quantity` balance — see §6 and §18.
 
 ---
 
@@ -86,8 +88,18 @@ unit `code`, discount `type`) — Arabic/English are presentation labels, not st
   **`display_name_ar`** (required, e.g. "كيس 2.5 كجم"), **`display_name_en`** (nullable, e.g. "Bag
   2.5 KG", R14); `package_description_ar?`, `package_description_en?` (if that label is stored);
   `base_price` (BIGINT minor units — **normal unit price**); `conversion_factor?` (nullable, reserved
-  for future inventory, unused in MVP, §9); `is_active`; `is_default BOOLEAN`; `sort_order`;
-  timestamps.
+  for future inventory, unused in MVP, §9);
+  **`stock_quantity INT UNSIGNED` (current inventory balance per selling unit, default 0, never < 0 —
+  prompt 32)**; `low_stock_threshold INT UNSIGNED?` (nullable; optional visual admin warning only);
+  `is_active`; `is_default BOOLEAN`; `sort_order`; timestamps.
+- **Availability rule (authoritative, prompt 32 §10)**: a unit is **orderable** iff
+  `is_active = true` AND `stock_quantity > 0`. `is_active = false` → administratively unavailable;
+  `stock_quantity = 0` (active) → **out of stock** (never manually toggled). The product-level
+  `availability` enum still gates the *product* (available/out_of_stock/inactive); the **unit stock
+  balance** is authoritative for whether that specific unit can be added/ordered.
+- **Inventory writes**: `stock_quantity` is mutated **only** inside a transaction via `InventoryService`
+  with `lockForUpdate()` on the row (order deduction, manual adjustment, cancellation restore); every
+  change writes an `inventory_adjustments` row (§18). Never written directly by controllers/Filament.
 - **Uniqueness**: `UNIQUE(product_id, code)`; one default per product (app-enforced).
 - **FKs**: `product_id → products.id` (cascade).
 - **Indexes**: `INDEX(product_id, is_active, sort_order)`; `INDEX(product_id, is_default)`.
@@ -243,6 +255,26 @@ unit `code`, discount `type`) — Arabic/English are presentation labels, not st
 - **Indexes**: `UNIQUE(key)`.
 - **Lifecycle**: admin-editable; cache with invalidation on save (R16).
 - **History/audit**: none.
+
+## 18. `inventory_adjustments` — durable stock-change history  `[prompt 32, Principle V/VI]`
+- **Purpose**: append-only audit trail of every change to a unit's `stock_quantity`. Not a
+  costing/valuation ledger — a simple, traceable history (no suppliers/batches/FIFO).
+- **Columns**: `id`; `product_unit_id` FK; `type` (**neutral**: `initial|manual_add|manual_remove|
+  order|order_cancel_restore|correction`); `quantity_delta INT` (signed: + adds, − removes);
+  `quantity_before INT UNSIGNED`; `quantity_after INT UNSIGNED`; `reason?` (nullable free text);
+  `reference_type?` + `reference_id?` (nullable polymorphic-ish link, e.g. `order`/order id);
+  `performed_by?` (nullable FK → `users.id`, set for manual admin actions, null for automatic);
+  `created_at` (no `updated_at` — rows are immutable).
+- **Uniqueness**: for order deductions, app-enforces **one deduction set per (order)** and
+  cancellation restore **once per order** (idempotency, prompt 32 §8) — guarded by checking existing
+  `order`/`order_cancel_restore` rows for the `reference` inside the transaction.
+- **FKs**: `product_unit_id → product_units.id` (cascade); `performed_by → users.id` (nullOnDelete).
+- **Indexes**: `INDEX(product_unit_id, created_at)` (per-unit history); `INDEX(reference_type,
+  reference_id)` (order linkage + idempotency lookup); `INDEX(type)`.
+- **Constraints**: `quantity_after = quantity_before + quantity_delta`; `quantity_after ≥ 0`
+  (never negative — enforced in `InventoryService` under `lockForUpdate`); rows are **immutable**
+  (no edit/delete from normal admin UI).
+- **History/audit**: this IS the inventory audit record; it must not be silently editable/deletable.
 
 ## (Framework) `notifications` — database notifications  `[FR-055, R16]`
 - Laravel's standard `notifications` table (morphable `notifiable`, `type`, `data` JSON, `read_at`)

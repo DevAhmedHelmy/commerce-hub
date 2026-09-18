@@ -681,6 +681,52 @@ justified; **MAY** = optional/permitted.
 - **FR-062**: Admins MUST be able to configure settings including at least the minimum order
   amount and the business/contact information shown in the customer experience.
 
+### Functional Requirements — Simple Inventory (prompt 32, CORE MVP)
+
+> **Scope amendment (prompt 32):** simple per-selling-unit inventory quantity is now a **core MVP
+> requirement**, superseding earlier "inventory quantities out of MVP" statements. Warehouses,
+> suppliers, purchasing, batch/expiry, costing, and unit-conversion stock remain out of scope.
+
+- **FR-071**: The system MUST maintain an integer stock balance **per selling unit** (not per
+  product); each unit's balance is independent (e.g. Bag 2.5KG = 80, Carton = 25).
+- **FR-072**: Admins MUST be able to view each unit's current stock, **add** stock, **reduce/correct**
+  stock, and see stock status; every manual change MUST require a quantity and record a reason where
+  the UX calls for it, show current stock, and preview the resulting stock.
+- **FR-073**: The system MUST NOT allow a unit's stock balance to go below zero (MVP: no negative
+  balance; corrections cannot drive it negative).
+- **FR-074**: A selling unit with `stock_quantity = 0` MUST be treated as **out of stock** — not
+  orderable, shown as "غير متوفر", and rejected by add-to-cart and checkout. Admins MUST NOT have to
+  manually toggle out-of-stock when stock naturally reaches zero. Authoritative unit orderability =
+  `is_active = true AND stock_quantity > 0`.
+- **FR-075**: Successful order placement MUST atomically decrement the ordered units' stock inside the
+  order transaction, using row-level locking to prevent overselling under concurrency; if any line
+  lacks sufficient stock the order MUST NOT be created and **no** stock may be partially deducted —
+  the customer is returned a structured changed/unavailable result to review.
+- **FR-076**: Inventory MUST be deducted at order **creation** (status New), not at later
+  confirmation; no reservation-expiry timers in MVP.
+- **FR-077**: Cancelling an order from an eligible non-delivered state MUST restore its deducted
+  stock **exactly once** (idempotent — never double-restock); delivered and already-cancelled orders
+  MUST NOT restore stock. Historical order snapshots remain unchanged.
+- **FR-078**: Every stock change (manual or automatic) MUST be recorded in a durable, non-editable
+  inventory adjustment history capturing unit, type, delta, before/after quantities, reason/source,
+  admin/order reference, and timestamp.
+
+**Acceptance Scenarios**:
+
+1. **Given** a unit at stock 10, **When** an admin adds 20, **Then** stock is 30 and an adjustment
+   (`manual_add`, +20, before 10, after 30) is recorded.
+2. **Given** a unit at stock 5, **When** an admin corrects it down, **Then** stock cannot go below 0
+   and the change is recorded.
+3. **Given** a unit reaches stock 0, **When** a customer views it, **Then** it shows Out of Stock and
+   cannot be added to cart or checked out.
+4. **Given** two concurrent orders for the last available quantity, **When** both confirm, **Then**
+   exactly one succeeds and the other is blocked with a changed/unavailable review — no overselling.
+5. **Given** a valid multi-line order, **When** placed, **Then** all lines' stock decrement atomically
+   and matching `order` adjustments are recorded; a failure rolls back every deduction.
+6. **Given** a placed order is cancelled from an eligible state, **When** cancelled, **Then** its stock
+   is restored once (`order_cancel_restore`); repeating cancellation never double-restocks; a delivered
+   order never restores.
+
 ### Functional Requirements — Admin Users & Authorization
 
 - **FR-063**: The system MUST support multiple authorized admin users who may manage the
@@ -742,6 +788,15 @@ justified; **MAY** = optional/permitted.
 - **BR-009**: Only active delivery areas and enabled slots are selectable for new orders.
 - **BR-010**: A customer may only view and act on their own orders; admins act on all orders
   subject to authorization.
+- **BR-013**: Inventory is tracked per selling unit as a non-negative integer balance; a unit is
+  orderable only when active and its balance is > 0 (stock is authoritative over a manual
+  out-of-stock toggle) (prompt 32).
+- **BR-014**: Stock is deducted atomically at order creation under row-level locking; insufficient
+  stock on any line blocks the whole order with no partial deduction — no overselling.
+- **BR-015**: Cancellation from an eligible non-delivered state restores stock exactly once
+  (idempotent); delivered/already-cancelled orders never restore. Order snapshots stay immutable.
+- **BR-016**: Every stock change is recorded in an immutable inventory adjustment history
+  (unit, type, delta, before/after, reason/source, admin/order reference, timestamp).
 
 ### Key Entities *(conceptual — no implementation/schema implied)*
 
@@ -847,11 +902,16 @@ requirements, business rules, acceptance scenarios, and entities:
 
 ## Out of Scope (Explicit MVP Exclusions)
 
+> **Amendment (prompt 32):** **simple per-selling-unit inventory quantity is now CORE MVP**
+> (FR-071–FR-078). Only the *advanced* inventory capabilities below remain out of scope.
+
 The following are explicitly NOT part of the MVP and MUST NOT enter implementation without
 an approved scope change (they are recorded as future opportunities, not requirements):
 online/electronic payment; credit accounts; customer credit limits; supplier management;
-purchasing; full warehouse/inventory quantities; stock reservations; multiple branches;
-multiple warehouses; driver management; route optimization; live driver tracking; loyalty
+purchasing; goods receiving; warehouses; multi-warehouse stock; stock reservations &
+reservation-expiry timers; batch/lot tracking; expiry dates; FIFO/LIFO; stock valuation/cost
+accounting; unit-conversion stock; barcode scanning; stock transfer; automated procurement;
+multiple branches; driver management; route optimization; live driver tracking; loyalty
 points; wallet; advanced coupons; advanced promotion engine; sales representatives;
 recurring orders; Buy Again / repeat order; accounting integration; ERP integration;
 advanced reports/analytics; customer-specific pricing; native Android/iOS app; Flutter app;

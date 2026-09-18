@@ -65,6 +65,32 @@ class Product extends Model
             ?? $this->units->sortBy('base_price')->first();
     }
 
+    /**
+     * Orderable = admin-available AND at least one orderable unit (active + in stock).
+     * Reads the loaded `units` relation (prompt 32 §10 / FR-074).
+     */
+    public function isOrderable(): bool
+    {
+        if ($this->availability !== AvailabilityStatus::Available) {
+            return false;
+        }
+
+        return $this->units->contains(fn (ProductUnit $unit) => $unit->isOrderable());
+    }
+
+    /**
+     * Stock-driven availability for display: inactive stays inactive; otherwise a product
+     * with no orderable (in-stock, active) unit shows out-of-stock without a manual toggle.
+     */
+    public function displayAvailability(): AvailabilityStatus
+    {
+        if ($this->availability === AvailabilityStatus::Inactive) {
+            return AvailabilityStatus::Inactive;
+        }
+
+        return $this->isOrderable() ? AvailabilityStatus::Available : AvailabilityStatus::OutOfStock;
+    }
+
     /** Visible to customers = not inactive (available + out-of-stock) (FR-015/FR-016). */
     public function scopeVisible(Builder $query): void
     {

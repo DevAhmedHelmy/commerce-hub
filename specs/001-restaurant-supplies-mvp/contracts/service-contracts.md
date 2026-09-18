@@ -176,6 +176,38 @@ returns `review_if_changed` (no silent placement, FR-044). Snapshots written per
 → no order, explicit error (FR-047). Order number allocated transactionally + `UNIQUE` (R11).
 Transitions per R10/BR-012/C3.
 
+## InventoryService  `[prompt 32, FR-071..FR-078, BR-013..BR-016, Principle II/VI]`
+
+```
+InventoryService {
+  int  currentStock(ProductUnit unit);
+  bool hasStockFor(ProductUnit unit, int quantity);
+
+  // Manual admin change; locks the unit row, enforces non-negative result, writes history.
+  InventoryAdjustment adjust(ProductUnit unit, string type, int delta, ?string reason, ?User by);
+      // type in { initial, manual_add, manual_remove, correction }
+
+  // Called INSIDE OrderService::place() TX: lockForUpdate() each unit row, verify all lines,
+  // decrement, and write one `order` adjustment per line — or throw InsufficientStock (caller
+  // aborts the whole transaction, no partial deduction). No overselling (BR-014).
+  void deductForOrder(Order order, CheckoutLine[] lines);
+
+  // Idempotent restore on eligible cancellation; writes `order_cancel_restore` adjustments once.
+  // No-op if this order already has restore rows, or is delivered/already-cancelled (BR-015).
+  void restoreForCancellation(Order order);
+}
+
+AdjustInventoryAction        // admin manual add/remove/correct wrapper over InventoryService::adjust
+DeductInventoryForOrder      // OrderService::place uses InventoryService::deductForOrder
+RestoreInventoryForCancellation  // OrderService::transition(cancel) uses restoreForCancellation
+```
+Stock is authoritative for orderability (`is_active AND stock_quantity > 0`, FR-074). Deduction is at
+order **creation** under `lockForUpdate` (R11-style scoped locks; no Redis/distributed locks). Checkout
+revalidation (`CheckoutReview`) surfaces a `Problem{kind:'insufficient_stock'}` / `Change` for a line
+whose requested quantity now exceeds stock, forcing re-review before placement. `InventoryService` is
+the **only** writer of `product_units.stock_quantity`; controllers/Filament call it, never mutate
+directly (Principle III). Every write appends an immutable `inventory_adjustments` row (§18 / BR-016).
+
 ## SettingsService  `[FR-062, FR-030, C7]`
 
 ```

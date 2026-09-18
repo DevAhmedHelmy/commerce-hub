@@ -8,13 +8,15 @@
 
     @php
         $units = $product->units;
-        $default = $units->firstWhere('is_default', true) ?? $units->first();
+        $default = $units->firstWhere(fn ($u) => $u->isOrderable())
+            ?? $units->firstWhere('is_default', true)
+            ?? $units->first();
         $unitData = $units->map(fn ($u) => [
             'id' => $u->id,
             'name' => $u->localized('display_name'),
             'price' => \App\Domain\Support\MoneyFormatter::format($u->basePriceMoney()),
+            'orderable' => $u->isOrderable(),
         ])->values();
-        $orderable = $product->availability === \App\Domain\Support\Enums\AvailabilityStatus::Available;
     @endphp
 
     <div class="flex aspect-square items-center justify-center overflow-hidden rounded-[--radius-md] bg-surface-muted">
@@ -30,7 +32,7 @@
         <p class="mt-4 text-sm text-muted" dir="auto">{{ $product->brand }}</p>
     @endif
     <h1 class="text-xl font-bold text-content" dir="auto">{{ $product->localized('name') }}</h1>
-    <div class="mt-2"><x-availability-badge :status="$product->availability" /></div>
+    <div class="mt-2"><x-availability-badge :status="$product->displayAvailability()" /></div>
 
     @if (filled($product->localized('description')))
         <p class="mt-3 text-sm leading-6 text-muted" dir="auto">{{ $product->localized('description') }}</p>
@@ -45,8 +47,8 @@
                 @foreach ($units as $u)
                     <button type="button" @click="unitId = {{ $u->id }}"
                         :class="unitId === {{ $u->id }} ? 'border-primary bg-primary/10 text-content' : 'border-border text-muted'"
-                        class="rounded-[--radius-sm] border px-3 py-2 text-sm font-semibold" dir="auto">
-                        {{ $u->localized('display_name') }}
+                        class="rounded-[--radius-sm] border px-3 py-2 text-sm font-semibold {{ $u->isOrderable() ? '' : 'opacity-60' }}" dir="auto">
+                        {{ $u->localized('display_name') }}@unless ($u->isOrderable()) · {{ __('inventory.out_of_stock') }}@endunless
                     </button>
                 @endforeach
             </div>
@@ -62,7 +64,11 @@
                 </div>
             </div>
 
-            <button type="button" @disabled(! $orderable)
+            <template x-if="!units.find(u => u.id === unitId)?.orderable">
+                <p class="mt-4 text-sm font-semibold text-muted">{{ __('inventory.out_of_stock') }}</p>
+            </template>
+
+            <button type="button" :disabled="!units.find(u => u.id === unitId)?.orderable"
                 class="mt-6 w-full rounded-[--radius-sm] bg-primary px-4 py-3 text-base font-semibold text-inverse hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-50">
                 {{ __('catalog.add_to_cart') }}
             </button>
