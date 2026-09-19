@@ -3,10 +3,9 @@
 declare(strict_types=1);
 
 use App\Models\Product;
-use App\Models\User;
 
 beforeEach(function () {
-    $this->admin = User::factory()->create();
+    $this->admin = superAdmin();
 });
 
 it('renders the admin category resource pages', function () {

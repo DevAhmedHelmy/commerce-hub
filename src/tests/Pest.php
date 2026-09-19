@@ -41,7 +41,25 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create an admin user with the given RBAC role(s), ensuring the roles/permissions exist first.
+ * Idempotent seeding keeps this cheap under RefreshDatabase.
+ */
+function adminWithRole(string ...$roles): App\Models\User
 {
-    // ..
+    (new Database\Seeders\RolesAndPermissionsSeeder())->run();
+
+    $user = App\Models\User::factory()->create();
+    $user->assignRole($roles);
+
+    // Ensure the freshly assigned roles/permissions are visible within the same request.
+    app(Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+
+    return $user;
+}
+
+/** A full-access super_admin admin user. */
+function superAdmin(): App\Models\User
+{
+    return adminWithRole(Database\Seeders\RolesAndPermissionsSeeder::ROLE_SUPER_ADMIN);
 }

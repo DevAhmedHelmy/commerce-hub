@@ -100,6 +100,13 @@ Arabic-first (RTL). Every action **calls domain services**; no rule duplication 
 | A15 | Inventory (prompt 32/37) | product **sub-unit stock** column (admin sees `primary + sub`), add/remove/correct in **either unit** (converted to sub-units, never < 0), **read-only adjustment history** (input unit + normalized delta), in-/out-of-stock filter | InventoryService / AdjustInventoryAction / ProductUnitConverter |
 | A16 | Units Resource (prompt 37) | reusable units CRUD (`code`, `name_ar`/`name_en`, active, sort); disable-not-delete when in use | model |
 | A17 | Audit Log Resource (prompt 39) | **read-only** list + view of `admin_audit_logs`; filters user/action/type/date-range; human-readable old→new diff; **no create/edit/delete** (append-only) | AdminAuditService |
+| A18 | Admin Users Resource (prompt 40) | super_admin-only; list/create/edit admin users, assign roles, `is_active`; passwords hashed/never shown; last-super-admin protected | UserPolicy / SuperAdminGuard |
+| A19 | Roles Resource (prompt 40) | super_admin-only; **read-focused** list + view of roles and their permissions | RolePolicy |
+
+**Authorization (prompt 40):** every resource/page/action is gated by Laravel policies mapped to
+spatie permissions; `super_admin` bypasses via `Gate::before`. Guards (`web` admin / `customer`)
+stay separate. Unauthorized direct access returns **403** (not hidden-only). Permissions never
+override business rules (cancellation matrix, non-negative stock, conversion-change safety).
 
 Notes: **status change** (A04) is the highest-frequency op → one-click next-status + cancel via
 `OrderService::transition` (validated, R10). **Availability toggle** (A08) inline. Product admin is

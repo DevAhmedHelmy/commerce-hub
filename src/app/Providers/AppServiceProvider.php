@@ -8,12 +8,17 @@ use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Setting;
 use App\Models\Unit;
+use App\Models\User;
 use App\Observers\ProductObserver;
 use App\Observers\ProductUnitObserver;
 use App\Observers\SettingObserver;
 use App\Observers\UnitObserver;
+use App\Observers\UserObserver;
+use App\Policies\RolePolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
+use Spatie\Permission\Models\Role;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,5 +50,11 @@ class AppServiceProvider extends ServiceProvider
         ProductUnit::observe(ProductUnitObserver::class);
         Unit::observe(UnitObserver::class);
         Setting::observe(SettingObserver::class);
+        User::observe(UserObserver::class);
+
+        // RBAC (prompt 40): super_admin bypasses every ability; the package Role model lives
+        // outside policy auto-discovery, so its policy is registered explicitly.
+        Gate::before(fn (User $user, string $ability): ?bool => $user->hasRole('super_admin') ? true : null);
+        Gate::policy(Role::class, RolePolicy::class);
     }
 }

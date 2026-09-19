@@ -24,14 +24,21 @@ admin actions that references — never replaces — the inventory ledger.
 
 ---
 
-## 1. `users` — admin/staff  `[FR-063, R8]`
+## 1. `users` — admin/staff  `[FR-063, R8; RBAC prompt 40]`
 - **Purpose**: administrators who use the Filament panel. **Not** customers.
-- **Columns**: `id`; `name`; `email` (login); `password` (hashed); `remember_token`; timestamps.
+- **Columns**: `id`; `name`; `email` (login); `password` (hashed); **`is_active`** (default true —
+  inactive admins are refused panel access, prompt 40 §18); `remember_token`; timestamps.
 - **Uniqueness**: `UNIQUE(email)`.
 - **FKs**: none.
 - **Indexes**: unique email (implicit).
-- **Lifecycle/soft-delete**: no soft-delete (deactivation via removal or a future `is_active`).
-- **History/audit**: none in MVP.
+- **RBAC** (prompt 40): roles/permissions via **spatie/laravel-permission ^6** (PHP-8.2-safe) —
+  standard tables `roles`, `permissions`, `model_has_roles`, `model_has_permissions`,
+  `role_has_permissions` (guard `web`). Five roles (super_admin/manager/orders_staff/inventory_staff/
+  pricing_staff) seeded idempotently by `RolesAndPermissionsSeeder`. Enforced via Laravel policies +
+  a `super_admin` Gate::before bypass; last-active-super-admin is protected. Not counted in the core
+  table total (framework/package tables).
+- **Lifecycle/soft-delete**: no soft-delete; deactivate via `is_active` (never hard-delete admins).
+- **History/audit**: admin-user/role/active changes audited in `admin_audit_logs` (#20, prompt 40 §19).
 
 ## 2. `customers` — ordering customers (B2B)  `[FR-006..FR-009, C5, R8]`
 - **Purpose**: recurring B2B buyers authenticated by phone OTP.

@@ -233,6 +233,24 @@ row; admins have a read-only Arabic audit screen; inventory ledger remains autho
 
 ---
 
+## Phase D5 — Admin Roles & Permissions / RBAC (prompt 40, cross-cutting authorization)
+
+**Purpose**: role-based access for dashboard `users` via spatie/laravel-permission ^6 (PHP-8.2-safe).
+Policies + `super_admin` Gate bypass; permissions never bypass business rules. Supersedes FR-064's
+"RBAC out of scope".
+
+- [x] TB01 [US5] Install `spatie/laravel-permission:^6` (PHP-8.2-safe); publish migration/config; `users.is_active` additive migration; `HasRoles` + `is_active` + panel gate on `User`
+- [x] TB02 [US5] Granular permissions + 5 roles matrix (super_admin/manager/orders_staff/inventory_staff/pricing_staff) in idempotent `RolesAndPermissionsSeeder`; `app:create-super-admin` command (no default password)
+- [x] TB03 [US5] Policies (Product/Category/Unit/AdminAuditLog/User/Role) + `super_admin` Gate::before bypass; gate inventory-adjust action + conversion/price fields by permission
+- [x] TB04 [US5] Admin Users resource (A18: roles + is_active, super_admin-only) + Roles resource (A19: read-only view); last-active-super-admin protection (`SuperAdminGuard`); audit user/role/active changes
+- [x] TB05 [P] [US5] Tests — role matrix (can/cannot per role), 403 on unauthorized user/role screens, deactivated-admin blocked, last-super-admin safety, business rules still enforced
+- [ ] TB06 [US5] *(later-phase coupling)* Apply the same policy gating to Orders/Delivery/Pricing-tier/Offer/Settings resources as those phases are built (inventory_staff dedicated stock screen, A15)
+
+**Checkpoint**: five roles enforce least-privilege server-side; only super_admin manages users/roles;
+the last super_admin is protected; business rules hold regardless of permissions.
+
+---
+
 ## Phase E — Pricing & Offers (US3 pricing, US5 admin) — BUSINESS-CRITICAL
 
 **Goal**: Deterministic unit/tier/offer pricing with the lower-of rule; admin manages tiers + offers.

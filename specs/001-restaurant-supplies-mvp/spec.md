@@ -792,9 +792,34 @@ justified; **MAY** = optional/permitted.
 
 - **FR-063**: The system MUST support multiple authorized admin users who may manage the
   defined administration functions.
-- **FR-064**: All administrative actions MUST be authorized server-side; the MVP MAY treat
-  all authorized admins as having equal access (fine-grained RBAC is out of scope) unless a
-  security separation need is identified.
+- **FR-064**: All administrative actions MUST be authorized server-side. **(SUPERSEDED by prompt 40 —
+  role-based access control is now in MVP scope; see FR-090..FR-094 below.)**
+
+### Functional Requirements — Admin Roles & Permissions (prompt 40, CORE MVP)
+
+- **FR-090**: The dashboard MUST support role-based access control for `users` (admin/staff) only;
+  customers (`customers`) remain a separate guard and MUST never receive admin roles.
+- **FR-091**: The system MUST provide the roles **super_admin** (مدير النظام), **manager** (مدير),
+  **orders_staff** (موظف الطلبات), **inventory_staff** (موظف المخزون), and **pricing_staff**
+  (موظف الأسعار والمبيعات), backed by granular permissions (products/units/pricing/inventory/orders/
+  customers/delivery/settings/audit/admin_users/roles) — no single catch-all permission.
+- **FR-092**: Authorization MUST be enforced server-side (policies/gates), not by hiding UI; direct
+  unauthorized access MUST return 403. Permissions never bypass business rules (e.g. `orders.cancel`
+  still cannot cancel a delivered order; `inventory.adjust` still cannot drive stock below zero;
+  `units.change_conversion` still obeys conversion-change safety).
+- **FR-093**: Only super_admin MAY manage admin users and roles by default. The system MUST prevent
+  privilege escalation and MUST NOT allow the last active super_admin to be deactivated or lose the
+  role (never zero active super_admins). Admin users have an `is_active` flag; inactive admins cannot
+  access the dashboard.
+- **FR-094**: Admin-user/role changes (create, role assigned/removed, activate/deactivate) MUST be
+  audited (prompt 39); passwords/secrets are never audited.
+
+**Acceptance Scenarios**:
+
+1. **Given** an orders_staff user, **When** they open the roles or users screen, **Then** access is 403.
+2. **Given** an inventory_staff user, **When** they attempt a price update, **Then** it is denied.
+3. **Given** the only active super_admin, **When** deactivation is attempted, **Then** it is refused.
+4. **Given** a manager, **When** they attempt to grant themselves super_admin, **Then** it is denied.
 
 ### Functional Requirements — Landing Page & PWA
 

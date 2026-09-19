@@ -48,13 +48,16 @@ class UnitsRelationManager extends RelationManager
                 ]),
             TextInput::make('conversion_to_sub_unit')->label('عدد الوحدات الفرعية داخل الوحدة الرئيسية')
                 ->numeric()->minValue(1)->default(1)->required()
-                // Conversion-change safety (prompt 37 §24): lock the factor once stock exists so
-                // the authoritative sub-unit balance is never reinterpreted under a new factor.
-                ->disabled(fn (?ProductUnit $record): bool => $record !== null && $record->product?->subStock() > 0)
+                // Conversion-change safety (prompt 37 §24) + RBAC (prompt 40 §12): lock the factor
+                // once stock exists, and only users with units.change_conversion may edit an existing one.
+                ->disabled(fn (?ProductUnit $record): bool => $record !== null
+                    && ($record->product?->subStock() > 0 || ! auth()->user()?->can('units.change_conversion')))
                 ->helperText(fn (?ProductUnit $record): string => $record !== null && $record->product?->subStock() > 0
                     ? 'لا يمكن تغيير التحويل أثناء وجود مخزون. صحّح المخزون إلى صفر أولاً.'
                     : 'للوحدة الفرعية اترك القيمة 1.'),
             TextInput::make('base_price')->label('السعر (ج)')->numeric()->required()->minValue(0)
+                // RBAC (prompt 40 §13): only users with pricing.update_base may edit prices.
+                ->disabled(fn (): bool => ! auth()->user()?->can('pricing.update_base'))
                 ->formatStateUsing(fn ($state) => $state !== null ? $state / 100 : null)
                 ->dehydrateStateUsing(fn ($state) => (int) round((float) $state * 100)),
             Toggle::make('is_sellable')->label('قابل للبيع')->default(true),
@@ -97,6 +100,9 @@ class UnitsRelationManager extends RelationManager
     private function adjustStockAction(): Action
     {
         return Action::make('adjustStock')->label(__('inventory.actions.add'))->icon('heroicon-o-adjustments-horizontal')
+            // RBAC (prompt 40 §14): stock adjustments require inventory.adjust; not hidden-only.
+            ->visible(fn (): bool => (bool) auth()->user()?->can('inventory.adjust'))
+            ->authorize(fn (): bool => (bool) auth()->user()?->can('inventory.adjust'))
             ->schema([
                 Select::make('type')->label('نوع التعديل')->required()->default('manual_add')
                     ->options([

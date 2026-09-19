@@ -12,10 +12,9 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Setting;
-use App\Models\User;
 
 beforeEach(function () {
-    $this->admin = User::factory()->create();
+    $this->admin = superAdmin();
 });
 
 it('audits a product update with old/new values and the actor', function () {
