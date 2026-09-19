@@ -43,7 +43,7 @@ See **R0a** for continuous PHP-8.2 enforcement during dependency resolution.
 
 Sources (verified 2026-09-18): [filament/filament — Packagist](https://packagist.org/packages/filament/filament) ·
 [filament/support — Packagist](https://packagist.org/packages/filament/support) ·
-[Laravel 12 PHP requirement](https://laravel.com/docs/12.x/releases).
+[Laravel 12 PHP requirement](https://laravel.com/12.x/releases).
 
 ---
 
@@ -619,6 +619,71 @@ Redis (cache/queue) → persistent workers → object storage → CDN, all confi
 **Rationale**: constitution infra constraints; low-cost first; upgradeable.
 
 **Alternatives**: Docker/Kubernetes (rejected MVP); serverless (rejected: mismatch).
+
+---
+
+## R24. Simple inventory (per selling unit) — `InventoryService` (prompt 32, supersedes "inventory out of MVP")
+
+**Decision**: Track a **simple integer stock balance per `product_unit`** as
+`product_units.stock_quantity` (`INT UNSIGNED`, default 0, **never negative**), with an append-only
+**`inventory_adjustments`** history table (data-model §18). A single **`InventoryService`** is the only
+writer: `adjust()` (manual `initial|manual_add|manual_remove|correction`), `deductForOrder()`, and
+`restoreForCancellation()`, wrapped by actions `AdjustInventoryAction` / `DeductInventoryForOrder` /
+`RestoreInventoryForCancellation` in the existing service style — no repository/ledger engine.
+
+- **Balance location**: `stock_quantity` on `product_units` (O(1) current balance) + dedicated
+  `inventory_adjustments` audit table. Chosen over event-replay balances (slow reads, complexity).
+- **Deduction timing**: at **order creation** (New), inside `OrderService::place`, not at confirmation;
+  no reservation timers (cart is not a reservation).
+- **Concurrency**: `lockForUpdate()` each unit row inside the TX, verify all lines, then decrement; any
+  shortfall aborts the whole TX → structured changed/unavailable result. **No Redis/distributed locks**
+  (shared hosting, consistent with R11).
+- **Cancellation restore**: idempotent `order_cancel_restore`, guarded by existing restore rows;
+  delivered/already-cancelled never restore; snapshots immutable (Principle V, R10/C3).
+- **Availability rule (authoritative)**: unit orderable iff `is_active AND stock_quantity > 0`;
+  `stock = 0` → out of stock with no manual toggle. Customers see Available / Out of Stock only.
+
+**Rationale**: Constitution II (deterministic, transactional, no overselling) + VI (auditable, no silent
+stock edits). Simplest safe model meeting FR-071..FR-078.
+
+**Alternatives (rejected)**: event-replay balances (overkill); version columns only (weaker than row
+locks); product-level stock (contradicts independent per-unit balances); warehouses/batches/costing
+(out of MVP per prompt 32 §23).
+
+> **Note (superseded by R25):** R24's "independent per-unit stock balance" is replaced by R25's
+> single **sub-unit** base balance per product. The `InventoryService` transaction/locking/audit
+> approach of R24 is retained; only the balance shape changes.
+
+---
+
+## R25. Two-level product units + sub-unit base inventory — `ProductUnitConverter` (prompt 37, supersedes independent-stock units)
+
+**Decision**: Split units into a **reusable generic `units` module** (code + localized name) and a
+per-product **`product_units` configuration** that pairs each product with exactly **one `primary`
+and one `sub`** unit plus a product-specific `conversion_to_sub_unit` (e.g. 1 carton = 12 pieces).
+Both levels are independently **sellable** and independently **priced** (the sub price is never
+derived from the primary). Inventory is held as a **single authoritative sub-unit balance per
+product** (on the sub-level row); primary-unit adjustments/orders are normalized to sub-units by a
+focused **`ProductUnitConverter`** value object before any stock write. Exactly **two levels** — no
+n-level trees (future multi-level remains possible without rewriting commerce logic).
+
+- **Base unit = sub unit** (prompt 37 §8): one number per product avoids the drift/inconsistency of
+  separate per-unit balances (the R24 model). Admin display converts to `primary + remainder sub`
+  (calculated, never stored).
+- **Conversion is product-specific**, stored on `product_units`, never on generic `units` (§2/§5).
+- **Deduction**: order lines convert to sub-units `(primary_qty × factor) + sub_qty`, locked +
+  deducted atomically (R11-style), audited with both the input unit/qty and the normalized delta.
+- **Conversion-change safety** (§24): editing the factor is **blocked while stock is non-zero**;
+  historical order snapshots store the factor used, so history never re-interprets.
+- **Pricing** (R3) unchanged: tiers/offers per sellable unit; lower-of; no stacking.
+
+**Rationale**: Constitution II (deterministic, no overselling, one authoritative balance), IV
+(reusable units module + product config is growth-ready; multi-level later without commerce rewrite),
+V (immutable snapshots incl. conversion factor).
+
+**Alternatives (rejected)**: per-unit independent balances (R24 — drift risk, superseded); conversion
+on the generic unit (wrong — it is product-specific); n-level conversion trees (out of MVP §32);
+deriving sub price from primary (rejected §7).
 
 ---
 

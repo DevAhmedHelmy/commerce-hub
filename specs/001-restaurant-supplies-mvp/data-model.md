@@ -13,11 +13,12 @@ identifiers use ULIDs.
 where soft-delete is justified (below). All **domain identifiers are language-neutral** (statuses,
 unit `code`, discount `type`) — Arabic/English are presentation labels, not stored business values.
 
-**Core MVP tables: 18** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
+**Core MVP tables: 19** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
 `failed_jobs`, `job_batches`, `migrations`, `password_reset_tokens` for admins;
-`notifications` is a framework table surfaced for admin new-order alerts). **Simple
-inventory (prompt 32, core MVP)** adds `inventory_adjustments` (#18) and a
-`product_units.stock_quantity` balance — see §6 and §18.
+`notifications` is a framework table surfaced for admin new-order alerts). **Simple inventory
+(prompt 32)** adds `inventory_adjustments` (#18); **two-level units (prompt 37)** adds a reusable
+`units` table (#19) and re-shapes `product_units` (#6) into a product↔unit configuration with a
+per-product primary/sub conversion and a single **sub-unit** stock balance — see §6, §18, §19.
 
 ---
 
@@ -82,30 +83,41 @@ inventory (prompt 32, core MVP)** adds `inventory_adjustments` (#18) and a
   optional (order items snapshot name/brand so deletion won't corrupt history).
 - **History/audit**: `order_items` snapshot `product_name`/`brand` (R9).
 
-## 6. `product_units` — selling units  `[FR-018, FR-022, §9, R3]`
-- **Purpose**: a way to buy a product (bag/carton/bottle); independently priceable.
-- **Columns**: `id`; `product_id` FK; `code` (**language-neutral**: `bag|carton|pack|bottle|…`);
-  **`display_name_ar`** (required, e.g. "كيس 2.5 كجم"), **`display_name_en`** (nullable, e.g. "Bag
-  2.5 KG", R14); `package_description_ar?`, `package_description_en?` (if that label is stored);
-  `base_price` (BIGINT minor units — **normal unit price**); `conversion_factor?` (nullable, reserved
-  for future inventory, unused in MVP, §9);
-  **`stock_quantity INT UNSIGNED` (current inventory balance per selling unit, default 0, never < 0 —
-  prompt 32)**; `low_stock_threshold INT UNSIGNED?` (nullable; optional visual admin warning only);
-  `is_active`; `is_default BOOLEAN`; `sort_order`; timestamps.
-- **Availability rule (authoritative, prompt 32 §10)**: a unit is **orderable** iff
-  `is_active = true` AND `stock_quantity > 0`. `is_active = false` → administratively unavailable;
-  `stock_quantity = 0` (active) → **out of stock** (never manually toggled). The product-level
-  `availability` enum still gates the *product* (available/out_of_stock/inactive); the **unit stock
-  balance** is authoritative for whether that specific unit can be added/ordered.
-- **Inventory writes**: `stock_quantity` is mutated **only** inside a transaction via `InventoryService`
-  with `lockForUpdate()` on the row (order deduction, manual adjustment, cancellation restore); every
-  change writes an `inventory_adjustments` row (§18). Never written directly by controllers/Filament.
-- **Uniqueness**: `UNIQUE(product_id, code)`; one default per product (app-enforced).
-- **FKs**: `product_id → products.id` (cascade).
-- **Indexes**: `INDEX(product_id, is_active, sort_order)`; `INDEX(product_id, is_default)`.
-- **Lifecycle/soft-delete**: `is_active`; soft-delete optional (order items snapshot unit name).
-- **History/audit**: `order_items` snapshot `unit_name`/`package_description` (R9). `base_price` here
-  is current; snapshot copies applied price at order time.
+## 6. `product_units` — product↔unit configuration (two-level)  `[FR-018/FR-022, R3; prompt 37 — SUPERSEDES the independent-stock "selling unit" model of prompt 32]`
+- **Purpose**: links a product to a reusable generic `unit` (§19) at a **level** with a
+  product-specific conversion. Each product defines **exactly one `primary` and one `sub`** unit
+  (two levels only — no n-level trees). Both levels are independently sellable and independently
+  priced. The generic `units` records are reusable across products; the conversion is per product.
+- **Columns**: `id`; `product_id` FK; `unit_id` FK → `units.id`; `level` (**neutral**: `primary|sub`);
+  `conversion_to_sub_unit INT UNSIGNED` (primary row = number of sub-units per primary, e.g. `12`;
+  sub row = `1`); `is_sellable BOOLEAN` (both `true` in MVP); `display_name_ar?`/`display_name_en?`
+  (optional per-product label override; falls back to the unit's name); `package_description_ar?`/`en?`;
+  `base_price BIGINT` minor units (**independent per unit — the sub price is NEVER derived from the
+  primary price**, prompt 37 §7); `is_active`; `sort_order`; timestamps.
+- **Stock is NOT stored per row** (prompt 37 §8). Authoritative inventory is a **single sub-unit
+  balance per product**, held on the **sub-level** `product_units` row as `stock_quantity INT UNSIGNED`
+  (default 0, never < 0) + optional `low_stock_threshold?`; the primary row carries no independent
+  balance. Admin display converts the sub-unit balance to `primary + remainder sub` for presentation
+  only (calculated, never stored — §15).
+- **Availability rule (authoritative)**: a sellable unit is **orderable** iff `is_active = true` AND
+  the product's sub-unit stock covers the requested quantity converted to sub-units. `stock = 0` →
+  out of stock (never manually toggled).
+- **Inventory writes**: the sub-unit balance is mutated **only** inside a transaction via
+  `InventoryService` with `lockForUpdate()`; primary-unit adjustments are converted to sub-units first
+  (via `ProductUnitConverter`). Every change writes an `inventory_adjustments` row (§18).
+- **Uniqueness/constraints**: `UNIQUE(product_id, level)` (one primary + one sub); `UNIQUE(product_id,
+  unit_id)`; primary `unit_id` ≠ sub `unit_id`; `conversion_to_sub_unit > 0` (sub row = 1).
+- **FKs**: `product_id → products.id` (cascade); `unit_id → units.id` (**restrict** — disable a unit,
+  never delete one in use).
+- **Indexes**: `INDEX(product_id, level)`; `INDEX(product_id, is_active, sort_order)`.
+- **Pricing**: quantity tiers (§7) and offers (§8) attach to the sellable `product_units` row; lower-of
+  rule unchanged (R3).
+- **History/audit**: `order_items` snapshot unit `code`/name/`level` + the **conversion factor used** +
+  the **normalized sub-unit quantity** deducted (R9, prompt 37 §23) — historical orders never change
+  if a product's conversion factor is later edited (§24).
+- **Conversion-change safety (prompt 37 §24)**: editing `conversion_to_sub_unit` is **blocked while
+  the product has non-zero stock**; admin must reset/correct stock first. Stock is never silently
+  reinterpreted under a new factor.
 
 ## 7. `product_price_tiers` — quantity/wholesale tiers  `[FR-019, FR-021, R3]`
 - **Purpose**: per-unit quantity breaks; optional (flat-priced unit has none).
@@ -256,15 +268,16 @@ inventory (prompt 32, core MVP)** adds `inventory_adjustments` (#18) and a
 - **Lifecycle**: admin-editable; cache with invalidation on save (R16).
 - **History/audit**: none.
 
-## 18. `inventory_adjustments` — durable stock-change history  `[prompt 32, Principle V/VI]`
-- **Purpose**: append-only audit trail of every change to a unit's `stock_quantity`. Not a
-  costing/valuation ledger — a simple, traceable history (no suppliers/batches/FIFO).
-- **Columns**: `id`; `product_unit_id` FK; `type` (**neutral**: `initial|manual_add|manual_remove|
-  order|order_cancel_restore|correction`); `quantity_delta INT` (signed: + adds, − removes);
-  `quantity_before INT UNSIGNED`; `quantity_after INT UNSIGNED`; `reason?` (nullable free text);
-  `reference_type?` + `reference_id?` (nullable polymorphic-ish link, e.g. `order`/order id);
-  `performed_by?` (nullable FK → `users.id`, set for manual admin actions, null for automatic);
-  `created_at` (no `updated_at` — rows are immutable).
+## 18. `inventory_adjustments` — durable stock-change history  `[prompt 32/37, Principle V/VI]`
+- **Purpose**: append-only audit trail of every change to a product's **sub-unit** stock balance. Not
+  a costing/valuation ledger — a simple, traceable history (no suppliers/batches/FIFO).
+- **Columns**: `id`; `product_unit_id` FK (the **sub-level** row that holds the balance); `type`
+  (**neutral**: `initial|manual_add|manual_remove|order|order_cancel_restore|correction`);
+  **`input_unit_id?` FK → `units.id`** and **`input_quantity INT?`** (what the admin actually entered,
+  e.g. 10 primary cartons — prompt 37 §16); **`quantity_delta INT`** (signed **normalized sub-unit**
+  delta, e.g. +120); `quantity_before INT UNSIGNED`; `quantity_after INT UNSIGNED` (sub-units);
+  `reason?`; `reference_type?` + `reference_id?` (e.g. `order`/order id); `performed_by?` (FK →
+  `users.id`, null for automatic); `created_at` (no `updated_at` — rows are immutable).
 - **Uniqueness**: for order deductions, app-enforces **one deduction set per (order)** and
   cancellation restore **once per order** (idempotency, prompt 32 §8) — guarded by checking existing
   `order`/`order_cancel_restore` rows for the `reference` inside the transaction.
@@ -275,6 +288,18 @@ inventory (prompt 32, core MVP)** adds `inventory_adjustments` (#18) and a
   (never negative — enforced in `InventoryService` under `lockForUpdate`); rows are **immutable**
   (no edit/delete from normal admin UI).
 - **History/audit**: this IS the inventory audit record; it must not be silently editable/deletable.
+
+## 19. `units` — reusable generic units (independent module)  `[prompt 37]`
+- **Purpose**: a reusable catalog of measurement/packaging units (carton, piece, bag, bottle, pack),
+  independent of any product. Products link to these via `product_units` (§6); the **conversion is
+  never stored here** (it is product-specific).
+- **Columns**: `id`; `code` (**language-neutral**: `carton|piece|bag|bottle|pack|…`);
+  **`name_ar`** (required), **`name_en`** (nullable, R14); `is_active`; `sort_order`; timestamps.
+- **Uniqueness**: `UNIQUE(code)`.
+- **Indexes**: `INDEX(is_active, sort_order)`.
+- **Lifecycle**: `is_active` toggle; **never hard-delete a unit referenced by a product** (restrict) —
+  prefer deactivate (prompt 37 §19). Editing a unit's display name does not alter historical order
+  snapshots (they store the unit code/name at order time).
 
 ## (Framework) `notifications` — database notifications  `[FR-055, R16]`
 - Laravel's standard `notifications` table (morphable `notifiable`, `type`, `data` JSON, `read_at`)

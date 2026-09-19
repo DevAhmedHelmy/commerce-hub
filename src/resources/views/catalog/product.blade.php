@@ -7,15 +7,18 @@
     </x-slot:header>
 
     @php
-        $units = $product->units;
-        $default = $units->firstWhere(fn ($u) => $u->isOrderable())
-            ?? $units->firstWhere('is_default', true)
-            ?? $units->first();
-        $unitData = $units->map(fn ($u) => [
+        $sellableUnits = $product->units
+            ->where('is_sellable', true)->where('is_active', true)
+            ->sortBy('sort_order')->values();
+        $subStock = $product->subStock();
+        $default = $sellableUnits->firstWhere('level', \App\Models\ProductUnit::LEVEL_PRIMARY)
+            ?? $sellableUnits->first();
+        $unitData = $sellableUnits->map(fn ($u) => [
             'id' => $u->id,
-            'name' => $u->localized('display_name'),
+            'name' => $u->label(),
             'price' => \App\Domain\Support\MoneyFormatter::format($u->basePriceMoney()),
-            'orderable' => $u->isOrderable(),
+            // Orderable if the product's sub-unit stock covers at least one of this unit.
+            'orderable' => $subStock >= (int) $u->conversion_to_sub_unit && $subStock > 0,
         ])->values();
     @endphp
 
@@ -38,17 +41,19 @@
         <p class="mt-3 text-sm leading-6 text-muted" dir="auto">{{ $product->localized('description') }}</p>
     @endif
 
-    @if ($units->isNotEmpty())
-        {{-- Unit + quantity selection foundation (design §5.9/§5.10). Cart submission is
+    @if ($sellableUnits->isNotEmpty())
+        {{-- Unit + quantity selection foundation (design §5.9/§5.10). Both the primary and
+             sub units are sellable and independently priced (prompt 37). Cart submission is
              wired in Phase F; here selection only re-prices the estimate client-side. --}}
         <div x-data="{ unitId: @js($default?->id), qty: 1, units: @js($unitData) }" class="mt-6">
             <p class="text-sm font-semibold text-content">{{ __('catalog.units') }}</p>
             <div class="mt-2 flex flex-wrap gap-2">
-                @foreach ($units as $u)
+                @foreach ($sellableUnits as $u)
+                    @php $unitOrderable = $subStock >= (int) $u->conversion_to_sub_unit && $subStock > 0; @endphp
                     <button type="button" @click="unitId = {{ $u->id }}"
                         :class="unitId === {{ $u->id }} ? 'border-primary bg-primary/10 text-content' : 'border-border text-muted'"
-                        class="rounded-[--radius-sm] border px-3 py-2 text-sm font-semibold {{ $u->isOrderable() ? '' : 'opacity-60' }}" dir="auto">
-                        {{ $u->localized('display_name') }}@unless ($u->isOrderable()) · {{ __('inventory.out_of_stock') }}@endunless
+                        class="rounded-[--radius-sm] border px-3 py-2 text-sm font-semibold {{ $unitOrderable ? '' : 'opacity-60' }}" dir="auto">
+                        {{ $u->label() }}@unless ($unitOrderable) · {{ __('inventory.out_of_stock') }}@endunless
                     </button>
                 @endforeach
             </div>

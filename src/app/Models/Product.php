@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Sellable product (data-model #5). Bilingual name/description; single natural `brand`.
@@ -50,24 +51,42 @@ class Product extends Model
         return $this->hasMany(ProductUnit::class);
     }
 
-    public function defaultUnit(): HasMany
+    public function primaryUnit(): HasOne
     {
-        return $this->units()->where('is_default', true);
+        return $this->hasOne(ProductUnit::class)->where('level', ProductUnit::LEVEL_PRIMARY);
+    }
+
+    public function subUnit(): HasOne
+    {
+        return $this->hasOne(ProductUnit::class)->where('level', ProductUnit::LEVEL_SUB);
+    }
+
+    /** Authoritative stock is the sub-unit balance (prompt 37 §8). */
+    public function subStock(): int
+    {
+        return (int) ($this->units->firstWhere('level', ProductUnit::LEVEL_SUB)?->stock_quantity ?? 0);
+    }
+
+    public function conversionToSubUnit(): int
+    {
+        return (int) ($this->units->firstWhere('level', ProductUnit::LEVEL_PRIMARY)?->conversion_to_sub_unit ?? 1);
     }
 
     /**
-     * Lightweight "from" unit for listing cards (§44): default unit, else cheapest
-     * active unit. Reads the loaded `units` relation to avoid N+1 on listings.
+     * Lightweight "from" unit for listing cards (§44): the primary sellable unit, else the
+     * cheapest sellable unit. Reads the loaded `units` relation to avoid N+1 on listings.
      */
     public function baselineUnit(): ?ProductUnit
     {
-        return $this->units->firstWhere('is_default', true)
-            ?? $this->units->sortBy('base_price')->first();
+        $sellable = $this->units->where('is_sellable', true)->where('is_active', true);
+
+        return $sellable->firstWhere('level', ProductUnit::LEVEL_PRIMARY)
+            ?? $sellable->sortBy('base_price')->first();
     }
 
     /**
-     * Orderable = admin-available AND at least one orderable unit (active + in stock).
-     * Reads the loaded `units` relation (prompt 32 §10 / FR-074).
+     * Orderable = admin-available AND has an active sellable unit AND the product's sub-unit
+     * stock is > 0 (prompt 37 §14 / FR-083/FR-084).
      */
     public function isOrderable(): bool
     {
@@ -75,7 +94,9 @@ class Product extends Model
             return false;
         }
 
-        return $this->units->contains(fn (ProductUnit $unit) => $unit->isOrderable());
+        $hasSellableUnit = $this->units->contains(fn (ProductUnit $u) => $u->is_active && $u->is_sellable);
+
+        return $hasSellableUnit && $this->subStock() > 0;
     }
 
     /**

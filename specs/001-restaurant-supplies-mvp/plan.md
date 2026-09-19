@@ -69,7 +69,7 @@ definitive**); immutable order snapshots; Arabic-first RTL; no OTP in production
 fallback only). **PHP-8.2 dependency safety**: Composer `config.platform.php = 8.2.x` +
 `composer check-platform-reqs` so nothing resolves a PHP-8.3+ package. MVP scope guard enforced (no
 payment/inventory/RBAC/English UI/etc.).
-**Scale/Scope**: Single branch; low-thousands product volume; multiple concurrent admins; **17 core
+**Scale/Scope**: Single branch; low-thousands product volume; multiple concurrent admins; **18 core
 MVP tables** (+ framework tables). 17 customer screens (C01–C17) and 14 admin surfaces (A01–A14).
 
 **Unknowns / NEEDS CLARIFICATION**: **None blocking.** Deferred-by-design (documented, not required
@@ -112,7 +112,7 @@ Redis/WebSocket/Docker-prod requirement ✅, low-cost hosting + documented upgra
 specs/001-restaurant-supplies-mvp/
 ├── plan.md                              # This file (/speckit-plan output)
 ├── research.md                          # Phase 0: decisions + ADR log (R0–R23)
-├── data-model.md                        # Phase 1: 17 core tables, indexes, constraints
+├── data-model.md                        # Phase 1: 18 core tables, indexes, constraints
 ├── quickstart.md                        # Phase 1: setup, env, deployment, upgrade path
 ├── contracts/
 │   ├── service-contracts.md             # Transport-agnostic service layer (DTOs + signatures)
@@ -134,7 +134,7 @@ created now**; this is the agreed target structure `/speckit-tasks` will populat
 
 ```text
 restaurant-supplies-pwa/                 # repository root (spec/design/docs live here, NOT in src/)
-├── .specify/  specs/  docs/  prompts/   # planning & governance (outside src/)
+├── .specify/  specs/    prompts/   # planning & governance (outside src/)
 └── src/                                 # ← Laravel application root
     ├── app/
     │   ├── Domain/                       # Business logic (Constitution I & III) — surface-agnostic
@@ -153,7 +153,7 @@ restaurant-supplies-pwa/                 # repository root (spec/design/docs liv
     │   ├── Models/                       # Thin Eloquent models
     │   ├── Notifications/                # NewOrderNotification (DB notification)
     │   └── Providers/                    # Bindings (OtpProvider, MediaService disk, Filament panel)
-    ├── database/{migrations,seeders,factories}/       # 17 core tables + framework tables
+    ├── database/{migrations,seeders,factories}/       # 18 core tables + framework tables
     ├── resources/
     │   ├── views/                        # Blade: landing, auth, customer PWA, components (<x-...>)
     │   │   └── components/               # Header, BottomNav, ProductCard, PriceDisplay, QtySelector,
@@ -252,7 +252,7 @@ extension (in deployment prerequisites). See **R0a** for continuous PHP-8.2 enfo
 
 ## Phase 1 — Design & Contracts (COMPLETE)
 
-- **Data model** ([data-model.md](./data-model.md)): 17 core MVP tables with purpose, columns
+- **Data model** ([data-model.md](./data-model.md)): 18 core MVP tables with purpose, columns
   (conceptual types), FKs, uniqueness, indexes, constraints, soft-delete decisions, and history/audit
   notes; money columns are `BIGINT` minor units; indexes mapped to §42 query patterns.
 - **Contracts** ([contracts/](./contracts/)): transport-agnostic service signatures + DTOs
@@ -279,11 +279,22 @@ Post-design Constitution re-check: **PASS** (table above holds after design; no 
 
 ## Scope Guard (explicitly NOT in MVP)
 
-Online/electronic payment, customer credit/limits, full inventory quantities/stock reservations,
-warehouses, multiple branches, drivers/route optimization/live tracking, loyalty/wallet, advanced
+Online/electronic payment, customer credit/limits, **advanced** inventory (warehouses, multi-warehouse,
+suppliers, purchasing, goods receiving, batch/lot & expiry, FIFO/LIFO, costing/valuation,
+n-level/arbitrary unit-conversion trees, barcode, stock transfer, automated procurement, reservation timers),
+multiple branches, drivers/route optimization/live tracking, loyalty/wallet, advanced
 coupons/promotion engine, recurring orders, Buy Again, customer-specific price lists, English UI,
 language switcher, microservices, fine-grained/advanced RBAC. **Readiness** for these is preserved in
 the data model and service layer (Constitution IV) but **none is implemented** (spec Out-of-Scope; R20).
+
+> **Amendment (prompt 32):** **simple inventory quantity is now CORE MVP** —
+> `inventory_adjustments` + `InventoryService` (FR-071..FR-078, data-model §18).
+>
+> **Amendment (prompt 37):** units are a **reusable module** + per-product **two-level** primary/sub
+> configuration with product-specific conversion; inventory is one authoritative **sub-unit** balance
+> per product; both units independently sellable/priced (R25, FR-079..FR-086, data-model §6/§19). This
+> supersedes the independent per-unit stock balance. Only the *advanced* inventory + n-level conversion
+> above remain out of scope.
 
 ---
 

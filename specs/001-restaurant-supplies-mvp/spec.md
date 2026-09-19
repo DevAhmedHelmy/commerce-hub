@@ -727,6 +727,45 @@ justified; **MAY** = optional/permitted.
    is restored once (`order_cancel_restore`); repeating cancellation never double-restocks; a delivered
    order never restores.
 
+### Functional Requirements — Two-Level Product Units (prompt 37, CORE MVP)
+
+> **Amendment (prompt 37):** units become a reusable module; each product defines a **primary** and a
+> **sub** unit with a product-specific conversion. This **supersedes** FR-071's "per selling unit"
+> stock wording — inventory is now one authoritative **sub-unit** balance per product.
+
+- **FR-079**: The system MUST maintain a reusable catalog of **units** (language-neutral `code` +
+  Arabic/English names), managed by admins, independent of any product.
+- **FR-080**: Each product MUST define exactly **one primary unit and one sub unit** with a
+  product-specific conversion factor (`1 primary = N sub`, N > 0); primary ≠ sub. No third level.
+- **FR-081**: Both the primary and sub units MUST be independently sellable; a customer MAY order
+  quantities of either (e.g. 2 cartons + 5 pieces of the same product).
+- **FR-082**: Each sellable unit MUST have its **own** price (and its own tiers/offers); the sub-unit
+  price MUST NOT be derived automatically from the primary price. The lower-of tier/offer rule
+  (FR-025/BR-011) applies per selected unit.
+- **FR-083**: Inventory MUST be stored and computed in the **sub unit** as the single authoritative
+  balance per product. Admin stock displays MAY show `primary + remainder sub` (calculated), but the
+  stored balance is sub-units.
+- **FR-084**: Admins MUST be able to add/remove/correct stock entered in **either** the primary or the
+  sub unit; primary entries MUST be converted to sub-units before the balance changes; stock MUST
+  never go below zero; each change records the input unit/quantity **and** the normalized sub-unit
+  delta.
+- **FR-085**: Order placement MUST deduct the **normalized sub-unit** quantity for all lines atomically
+  under locking (no overselling); order snapshots MUST preserve the unit, the conversion factor used,
+  and the normalized sub-unit quantity, so later conversion-factor changes never alter history.
+- **FR-086**: Changing a product's conversion factor MUST be blocked while the product has non-zero
+  stock (stock is never silently re-interpreted); a stock correction/reset is required first.
+
+**Acceptance Scenarios**:
+
+1. **Given** `1 carton = 12 pieces` and stock 125 pieces, **When** admin adds 10 cartons, **Then**
+   stock becomes 245 pieces and the adjustment records input=10 cartons, normalized delta +120.
+2. **Given** the same product, **When** a customer orders 2 cartons + 5 pieces, **Then** 29 pieces are
+   deducted atomically (no overselling) and snapshots store the factor 12.
+3. **Given** carton = 1,200 ج and piece = 110 ج, **When** the carton price changes, **Then** the piece
+   price is unaffected (independent pricing).
+4. **Given** a product with non-zero stock, **When** admin tries to change its conversion factor,
+   **Then** the change is blocked until stock is reset/corrected.
+
 ### Functional Requirements — Admin Users & Authorization
 
 - **FR-063**: The system MUST support multiple authorized admin users who may manage the
@@ -910,7 +949,8 @@ an approved scope change (they are recorded as future opportunities, not require
 online/electronic payment; credit accounts; customer credit limits; supplier management;
 purchasing; goods receiving; warehouses; multi-warehouse stock; stock reservations &
 reservation-expiry timers; batch/lot tracking; expiry dates; FIFO/LIFO; stock valuation/cost
-accounting; unit-conversion stock; barcode scanning; stock transfer; automated procurement;
+accounting; n-level / arbitrary unit-conversion trees (two-level primary→sub IS in MVP, prompt 37);
+barcode scanning; stock transfer; automated procurement;
 multiple branches; driver management; route optimization; live driver tracking; loyalty
 points; wallet; advanced coupons; advanced promotion engine; sales representatives;
 recurring orders; Buy Again / repeat order; accounting integration; ERP integration;

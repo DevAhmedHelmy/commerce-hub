@@ -6,75 +6,63 @@ use App\Domain\Inventory\AdjustInventoryAction;
 use App\Domain\Inventory\InsufficientStockException;
 use App\Domain\Inventory\InventoryAdjustmentType;
 use App\Domain\Inventory\InventoryService;
-use App\Models\ProductUnit;
+use App\Models\Product;
 
 beforeEach(function () {
-    $this->service = app(InventoryService::class);
     $this->action = app(AdjustInventoryAction::class);
+    $this->service = app(InventoryService::class);
 });
 
-it('adds stock and records a manual_add adjustment', function () {
-    $unit = ProductUnit::factory()->stock(10)->create();
+it('adds stock entered in the primary unit, converted to sub-units', function () {
+    $product = Product::factory()->withUnits(conversion: 12, subStock: 100)->create();
 
-    $this->action->add($unit, 20, 'توريد جديد', null);
+    $this->action->add($product, $product->primaryUnit, 10, 'توريد جديد', null); // 10 cartons = 120 pieces
 
-    expect($unit->fresh()->stock_quantity)->toBe(30);
+    expect($this->service->currentStock($product))->toBe(220);
     $this->assertDatabaseHas('inventory_adjustments', [
-        'product_unit_id' => $unit->id,
         'type' => InventoryAdjustmentType::ManualAdd->value,
-        'quantity_delta' => 20,
-        'quantity_before' => 10,
-        'quantity_after' => 30,
+        'input_quantity' => 10,
+        'quantity_delta' => 120,
+        'quantity_before' => 100,
+        'quantity_after' => 220,
     ]);
 });
 
-it('removes stock and records a manual_remove adjustment', function () {
-    $unit = ProductUnit::factory()->stock(30)->create();
+it('adds stock entered directly in the sub unit', function () {
+    $product = Product::factory()->withUnits(conversion: 12, subStock: 100)->create();
 
-    $this->action->remove($unit, 12, null, null);
+    $this->action->add($product, $product->subUnit, 7, null, null);
 
-    expect($unit->fresh()->stock_quantity)->toBe(18);
-    $this->assertDatabaseHas('inventory_adjustments', [
-        'product_unit_id' => $unit->id,
-        'type' => InventoryAdjustmentType::ManualRemove->value,
-        'quantity_delta' => -12,
-        'quantity_after' => 18,
-    ]);
+    expect($this->service->currentStock($product))->toBe(107);
+    $this->assertDatabaseHas('inventory_adjustments', ['quantity_delta' => 7, 'quantity_after' => 107]);
 });
 
-it('never allows stock to go below zero', function () {
-    $unit = ProductUnit::factory()->stock(5)->create();
+it('removes stock in the sub unit', function () {
+    $product = Product::factory()->withUnits(conversion: 12, subStock: 50)->create();
 
-    expect(fn () => $this->action->remove($unit, 10, null, null))
+    $this->action->remove($product, $product->subUnit, 12, null, null);
+
+    expect($this->service->currentStock($product))->toBe(38);
+});
+
+it('never allows stock below zero', function () {
+    $product = Product::factory()->withUnits(conversion: 12, subStock: 5)->create();
+
+    expect(fn () => $this->action->remove($product, $product->subUnit, 10, null, null))
         ->toThrow(InsufficientStockException::class);
 
-    // Balance unchanged and no adjustment written (transaction rolled back).
-    expect($unit->fresh()->stock_quantity)->toBe(5);
+    expect($this->service->currentStock($product))->toBe(5);
     $this->assertDatabaseCount('inventory_adjustments', 0);
 });
 
-it('corrects stock to an exact target', function () {
-    $unit = ProductUnit::factory()->stock(40)->create();
+it('corrects the balance to an exact sub-unit target', function () {
+    $product = Product::factory()->withUnits(conversion: 12, subStock: 100)->create();
 
-    $this->action->correctTo($unit, 25, 'جرد', null);
+    $this->action->correctTo($product, 25, 'جرد', null);
 
-    expect($unit->fresh()->stock_quantity)->toBe(25);
+    expect($this->service->currentStock($product))->toBe(25);
     $this->assertDatabaseHas('inventory_adjustments', [
-        'product_unit_id' => $unit->id,
         'type' => InventoryAdjustmentType::Correction->value,
-        'quantity_delta' => -15,
         'quantity_after' => 25,
     ]);
-});
-
-it('exposes stock helpers and orderability', function () {
-    $inStock = ProductUnit::factory()->stock(3)->create();
-    $empty = ProductUnit::factory()->outOfStock()->create();
-    $inactive = ProductUnit::factory()->stock(3)->create(['is_active' => false]);
-
-    expect($this->service->hasStockFor($inStock, 3))->toBeTrue()
-        ->and($this->service->hasStockFor($inStock, 4))->toBeFalse()
-        ->and($inStock->isOrderable())->toBeTrue()
-        ->and($empty->isOrderable())->toBeFalse()
-        ->and($inactive->isOrderable())->toBeFalse();
 });

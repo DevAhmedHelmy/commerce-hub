@@ -208,6 +208,24 @@ whose requested quantity now exceeds stock, forcing re-review before placement. 
 the **only** writer of `product_units.stock_quantity`; controllers/Filament call it, never mutate
 directly (Principle III). Every write appends an immutable `inventory_adjustments` row (§18 / BR-016).
 
+## ProductUnitConverter  `[prompt 37, FR-079..FR-086]`
+
+```
+ProductUnitConverter {
+  // (primary_qty × conversion_to_sub_unit) for a primary line; (× 1) for a sub line.
+  int toSubUnits(ProductUnit unit, int quantity);
+
+  // Present an authoritative sub-unit balance as {primary, remainderSub} for admin display only.
+  array formatStock(Product product, int subUnitBalance);   // e.g. 125 => {primary: 10, sub: 5}
+}
+```
+Two-level only (primary → sub); MVP has no n-level trees. **Pure conversion — never touches pricing**
+(sub price is independent, R25/§7). `InventoryService` normalizes every order line and every
+primary-unit admin adjustment to **sub-units** via this converter before writing the single
+authoritative sub-unit balance; adjustments record both the input unit/qty and the normalized delta.
+Order snapshots capture the conversion factor used so history is stable if the factor later changes
+(blocked while stock ≠ 0, §24).
+
 ## SettingsService  `[FR-062, FR-030, C7]`
 
 ```

@@ -19,6 +19,8 @@ class InventoryAdjustment extends Model
     protected $fillable = [
         'product_unit_id',
         'type',
+        'input_unit_id',
+        'input_quantity',
         'quantity_delta',
         'quantity_before',
         'quantity_after',

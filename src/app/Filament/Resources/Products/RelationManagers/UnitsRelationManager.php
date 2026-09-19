@@ -4,10 +4,11 @@ namespace App\Filament\Resources\Products\RelationManagers;
 
 use App\Domain\Inventory\AdjustInventoryAction;
 use App\Domain\Inventory\InsufficientStockException;
-use App\Domain\Support\Enums\UnitCode;
+use App\Domain\Inventory\ProductUnitConverter;
 use App\Domain\Support\Money;
 use App\Domain\Support\MoneyFormatter;
 use App\Models\ProductUnit;
+use App\Models\Unit;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
@@ -23,14 +24,12 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 /**
- * Selling units + simple inventory (T044c / T148). The create/edit form deliberately
- * excludes `stock_quantity` — stock is changed only through the stock actions, which go
- * via InventoryService and write the audit history (BR-016). Price is entered in EGP and
- * stored as integer minor units.
+ * Product↔unit configuration (prompt 37/38): each product has a primary + sub unit with a
+ * conversion. Stock is NOT edited here directly — the row's stock action routes through
+ * InventoryService (converting primary input to the sub-unit balance) and writes history.
  */
 class UnitsRelationManager extends RelationManager
 {
@@ -39,19 +38,27 @@ class UnitsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Select::make('code')->label('الكود')
-                ->options(collect(UnitCode::cases())
-                    ->mapWithKeys(fn (UnitCode $c) => [$c->value => __($c->labelKey())])->all())
-                ->required(),
-            TextInput::make('display_name_ar')->label('الاسم (عربي)')->required()->maxLength(255),
-            TextInput::make('display_name_en')->label('الاسم (إنجليزي)')->maxLength(255),
-            TextInput::make('package_description_ar')->label('وصف العبوة (عربي)')->maxLength(255),
-            TextInput::make('package_description_en')->label('وصف العبوة (إنجليزي)')->maxLength(255),
+            Select::make('unit_id')->label('الوحدة')
+                ->options(fn () => Unit::query()->active()->orderBy('sort_order')->pluck('name_ar', 'id')->all())
+                ->searchable()->required(),
+            Select::make('level')->label('المستوى')->required()->default(ProductUnit::LEVEL_SUB)
+                ->options([
+                    ProductUnit::LEVEL_PRIMARY => 'الوحدة الرئيسية',
+                    ProductUnit::LEVEL_SUB => 'الوحدة الفرعية',
+                ]),
+            TextInput::make('conversion_to_sub_unit')->label('عدد الوحدات الفرعية داخل الوحدة الرئيسية')
+                ->numeric()->minValue(1)->default(1)->required()
+                // Conversion-change safety (prompt 37 §24): lock the factor once stock exists so
+                // the authoritative sub-unit balance is never reinterpreted under a new factor.
+                ->disabled(fn (?ProductUnit $record): bool => $record !== null && $record->product?->subStock() > 0)
+                ->helperText(fn (?ProductUnit $record): string => $record !== null && $record->product?->subStock() > 0
+                    ? 'لا يمكن تغيير التحويل أثناء وجود مخزون. صحّح المخزون إلى صفر أولاً.'
+                    : 'للوحدة الفرعية اترك القيمة 1.'),
             TextInput::make('base_price')->label('السعر (ج)')->numeric()->required()->minValue(0)
                 ->formatStateUsing(fn ($state) => $state !== null ? $state / 100 : null)
                 ->dehydrateStateUsing(fn ($state) => (int) round((float) $state * 100)),
+            Toggle::make('is_sellable')->label('قابل للبيع')->default(true),
             Toggle::make('is_active')->label('نشط')->default(true),
-            Toggle::make('is_default')->label('الوحدة الافتراضية'),
             TextInput::make('sort_order')->label('الترتيب')->numeric()->default(0),
         ]);
     }
@@ -59,35 +66,24 @@ class UnitsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('display_name_ar')
+            ->recordTitleAttribute('level')
             ->columns([
-                TextColumn::make('display_name_ar')->label('الوحدة')->searchable(),
+                TextColumn::make('unit.name_ar')->label('الوحدة'),
+                TextColumn::make('level')->label('المستوى')->badge()
+                    ->formatStateUsing(fn (string $state) => $state === ProductUnit::LEVEL_PRIMARY ? 'رئيسية' : 'فرعية'),
+                TextColumn::make('conversion_to_sub_unit')->label('التحويل'),
                 TextColumn::make('base_price')->label('السعر')
                     ->formatStateUsing(fn ($state) => MoneyFormatter::format(Money::fromMinor((int) $state))),
-                TextColumn::make('stock_quantity')->label(__('inventory.stock'))->badge()
-                    ->color(fn (ProductUnit $record) => match (true) {
-                        (int) $record->stock_quantity === 0 => 'danger',
-                        $record->low_stock_threshold !== null && $record->stock_quantity <= $record->low_stock_threshold => 'warning',
-                        default => 'success',
-                    }),
+                TextColumn::make('stock_quantity')->label(__('inventory.stock'))
+                    ->formatStateUsing(fn (ProductUnit $record) => $record->isSub() ? (int) $record->stock_quantity : '—'),
+                IconColumn::make('is_sellable')->label('للبيع')->boolean(),
                 IconColumn::make('is_active')->label('نشط')->boolean(),
-                IconColumn::make('is_default')->label('افتراضي')->boolean(),
-            ])
-            ->filters([
-                TernaryFilter::make('in_stock')->label(__('inventory.stock'))
-                    ->trueLabel(__('inventory.in_stock'))->falseLabel(__('inventory.out_of_stock'))
-                    ->queries(
-                        true: fn ($q) => $q->where('stock_quantity', '>', 0),
-                        false: fn ($q) => $q->where('stock_quantity', 0),
-                        blank: fn ($q) => $q,
-                    ),
             ])
             ->headerActions([
                 CreateAction::make(),
             ])
             ->recordActions([
                 $this->adjustStockAction(),
-                $this->historyAction(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -108,36 +104,28 @@ class UnitsRelationManager extends RelationManager
                         'manual_remove' => __('inventory.actions.remove'),
                         'correction' => __('inventory.actions.correct'),
                     ]),
-                TextInput::make('quantity')->label(__('inventory.fields.quantity'))->numeric()->required()->minValue(0),
+                TextInput::make('quantity')->label(__('inventory.fields.quantity'))->numeric()->required()->minValue(0)
+                    ->helperText('بوحدة هذا الصف؛ يتم تحويلها تلقائيًا إلى الوحدة الفرعية.'),
                 Textarea::make('reason')->label(__('inventory.fields.reason'))->rows(2),
             ])
             ->action(function (array $data, ProductUnit $record): void {
                 $action = app(AdjustInventoryAction::class);
-                $by = auth()->id();
+                $converter = app(ProductUnitConverter::class);
+                $product = $record->product;
                 $qty = (int) $data['quantity'];
                 $reason = $data['reason'] ?? null;
+                $by = auth()->id();
 
                 try {
                     match ($data['type']) {
-                        'manual_add' => $action->add($record, $qty, $reason, $by),
-                        'manual_remove' => $action->remove($record, $qty, $reason, $by),
-                        'correction' => $action->correctTo($record, $qty, $reason, $by),
+                        'manual_add' => $action->add($product, $record, $qty, $reason, $by),
+                        'manual_remove' => $action->remove($product, $record, $qty, $reason, $by),
+                        'correction' => $action->correctTo($product, $converter->toSubUnits($record, $qty), $reason, $by),
                     };
                     Notification::make()->title('تم تحديث المخزون')->success()->send();
                 } catch (InsufficientStockException) {
                     Notification::make()->title(__('inventory.errors.negative'))->danger()->send();
                 }
             });
-    }
-
-    private function historyAction(): Action
-    {
-        return Action::make('history')->label(__('inventory.actions.history'))->icon('heroicon-o-clock')
-            ->modalHeading(__('inventory.actions.history'))
-            ->modalSubmitAction(false)
-            ->modalCancelActionLabel('إغلاق')
-            ->modalContent(fn (ProductUnit $record) => view('filament.inventory-history', [
-                'adjustments' => $record->adjustments()->with('performedBy')->latest('id')->limit(50)->get(),
-            ]));
     }
 }

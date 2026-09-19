@@ -182,6 +182,36 @@ transactional order deduction / cancellation restore. Supersedes "inventory out 
 
 **Checkpoint**: stock is per-unit, admin-manageable with audit history, stock-driven availability holds,
 orders never oversell, and cancellations restore exactly once.
+> **Superseded by Phase D3 (prompt 37):** the "independent per-unit stock" shape of T144–T149 is
+> refactored to a reusable units module + product↔unit two-level config with a single **sub-unit**
+> base balance. T146/T147/T148 logic is reworked by D3; the audit/lock/non-negative approach is kept.
+
+---
+
+## Phase D3 — Units Refactor & Two-Level Conversion (prompt 37, CORE MVP amendment)
+
+**Purpose**: reusable `units` module + per-product primary/sub unit pair with product-specific
+conversion; inventory rebased to the **sub unit**; independent per-unit pricing. Supersedes the
+independent-stock selling-unit model (R25, FR-079..FR-086). Controlled refactor — **no `migrate:fresh`**.
+
+> **Sequencing**: implement after Phase D/E stabilize; order-deduction/snapshot coupling lands with
+> Phases I/J. Migration must preserve existing products/prices/orders (§31).
+
+- [x] T159 [P] [US5] Migration + `Unit` model + factory + Filament `UnitResource` (A16): reusable units (`code`, `name_ar/en`, `is_active`, `sort_order`; `UNIQUE(code)`); disable-not-delete when referenced
+- [x] T160 [US5] Refactor `product_units` → product↔unit config: migration adds `unit_id` FK, `level` (primary|sub), `conversion_to_sub_unit`, `is_sellable`; constraints `UNIQUE(product_id,level)`, primary≠sub (`UNIQUE(product_id,unit_id)`), factor>0 (model guard); **backfill** existing rows into `units` + assign primary/sub intentionally (report ambiguous rows for manual mapping)
+- [x] T161 [US5] `ProductUnitConverter` (primary→sub, sub→sub, format sub balance as primary+remainder) in `src/app/Domain/Inventory/ProductUnitConverter.php`; move authoritative `stock_quantity` to the **sub-level** row (data-migrate existing balances)
+- [x] T162 [US5] Update `InventoryService`/`AdjustInventoryAction`: accept input in primary or sub unit, normalize to sub-units, record `input_unit_id`/`input_quantity` + normalized delta; never < 0
+- [x] T163 [US5] Product admin Units tab: pick primary + sub unit + conversion factor (Arabic labels), independent price per sellable unit; **block factor change while stock ≠ 0** (§24)
+- [ ] T164 [US2] Customer: both units sellable; availability from product sub-unit stock; reject requested qty > available (Arabic message, no silent reduction)
+- [ ] T165 [US4] *(Phase I coupling)* Order deduction normalizes lines to sub-units atomically; snapshots capture unit code/level + conversion factor used + normalized sub-unit qty
+- [x] T166 [P] [US5] Tests — units: create, activate/deactivate, one primary + one sub per product, primary≠sub, factor required & > 0
+- [x] T167 [P] [US5] Tests — conversion: 1→12, 10→120, 7 sub→7, 2 carton+5 piece→29, 125 sub→"10 carton + 5 piece"
+- [ ] T168 [P] [US4] Tests — inventory two-level: add primary (+120), add sub (+7), remove, correct, no-negative, order deducts normalized, cancel restores normalized once, concurrent no-oversell
+- [ ] T169 [P] [US3] Tests — pricing independence: carton/piece independent prices; changing one doesn't change the other; tiers/offers per selected unit; lower-of holds
+
+**Checkpoint**: reusable units; each product has a primary/sub pair + conversion; one authoritative
+sub-unit balance; independent pricing; orders deduct normalized sub-units; history stable across
+factor changes.
 
 ---
 
