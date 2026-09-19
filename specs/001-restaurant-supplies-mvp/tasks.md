@@ -479,8 +479,8 @@ the last super_admin is protected; business rules hold regardless of permissions
 - [ ] T126b [US13] State-coverage audit for **admin** (Filament) resources/pages — empty/validation/disabled states + Arabic labels, against admin-design, in `src/app/Filament/**`
 - [ ] T127 [P] [US13] Arabic RTL + mixed Arabic/English (brands) + Latin-digit review across customer + admin UI; centralized `444 ج` formatting used everywhere (no inline currency)
 - [ ] T128 [P] [US13] Accessibility + mobile responsiveness pass (labels, focus, contrast, touch targets) on critical screens
-- [ ] T129 Run `composer check-platform-reqs` and confirm no dependency requires PHP 8.3+ (R0a)
-- [ ] T130 Run full Pest suite (`php artisan test`) and ensure all mandatory business-logic tests pass
+- [x] T129 Run `composer check-platform-reqs` and confirm no dependency requires PHP 8.3+ (R0a)
+- [x] T130 Run full Pest suite (`php artisan test`) and ensure all mandatory business-logic tests pass
 
 **Checkpoint**: Constitution VI/VII/VIII satisfied; performance and PHP-8.2 safety verified.
 
@@ -490,10 +490,10 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 **Purpose**: Seed demonstrable data and safe demo OTP; verify installability.
 
-- [ ] T131 [P] Seeders — admin user, categories, products, units, price tiers, offers in `src/database/seeders/`
-- [ ] T132 [P] Seeders — delivery areas, weekday slots, a delivery discount rule, settings (minimum order + business info) in `src/database/seeders/`
+- [x] T131 [P] Seeders — admin user, categories, products, units, price tiers, offers in `src/database/seeders/`
+- [x] T132 [P] Seeders — delivery areas, weekday slots, a delivery discount rule, settings (minimum order + business info) in `src/database/seeders/`
 - [ ] T133 [P] Seeder — sample orders across statuses for demo/dashboard in `src/database/seeders/`
-- [ ] T134 Demo OTP safety — `LogOtpProvider` surfaces the code via a non-prod dev channel/banner only; guard prevents any static/test OTP behavior when `APP_ENV=production` (bind check in provider)
+- [x] T134 Demo OTP safety — `LogOtpProvider` surfaces the code via a non-prod dev channel/banner only; guard prevents any static/test OTP behavior when `APP_ENV=production` (bind check in provider)
 - [ ] T135 [P] Staging environment instructions (env, seed, HTTPS) appended to `quickstart.md` (docs, outside `src/`)
 - [ ] T136 PWA installability manual test checklist on a supported mobile browser (docs)
 
@@ -506,7 +506,7 @@ the last super_admin is protected; business rules hold regardless of permissions
 **Purpose**: Low-cost shared-hosting deployment (no Docker); production safety.
 
 - [ ] T137 Document `src/public` as web root + shared-hosting deploy notes in `quickstart.md` (docs)
-- [ ] T138 [P] Production `.env` template (`APP_DEBUG=false`, HTTPS, `SESSION_SECURE_COOKIE=true`, real `OTP_DRIVER`, no secrets committed) in `src/.env.example`
+- [x] T138 [P] Production `.env` template (`APP_DEBUG=false`, HTTPS, `SESSION_SECURE_COOKIE=true`, real `OTP_DRIVER`, no secrets committed) in `src/.env.example`
 - [ ] T139 Production build steps — `composer install --no-dev --optimize-autoloader` (platform-pinned), `npm ci && npm run build`, `php artisan config:cache route:cache view:cache` (docs)
 - [ ] T140 [P] Writable dirs (`src/storage`, `src/bootstrap/cache`) + `php artisan storage:link` in deploy notes
 - [ ] T141 [P] Single cron `schedule:run` for maintenance (expired-OTP cleanup); document DB-queue drain as fallback-only (R16/R23)
