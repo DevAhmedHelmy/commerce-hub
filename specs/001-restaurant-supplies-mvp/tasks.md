@@ -311,20 +311,20 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY)
 
-- [ ] T069 [P] [US8] Unit test delivery discounts — fixed, percentage, free-delivery saving computation in `src/tests/Unit/Delivery/DiscountTypesTest.php`
-- [ ] T070 [P] [US8] Unit test multiple-eligible → largest saving, tie-break higher `min_subtotal`, no stacking, floor 0 / cannot exceed fee in `src/tests/Unit/Delivery/DiscountResolutionTest.php`
-- [ ] T071 [P] [US7] Feature test area eligibility (inactive blocked) and slot selectability (inactive rejected, weekday match, not past) in `src/tests/Feature/Delivery/AvailabilityTest.php`
+- [x] T069 [P] [US8] Unit test delivery discounts — fixed, percentage, free-delivery saving computation in `src/tests/Unit/Delivery/DiscountTypesTest.php`
+- [x] T070 [P] [US8] Unit test multiple-eligible → largest saving, tie-break higher `min_subtotal`, no stacking, floor 0 / cannot exceed fee in `src/tests/Unit/Delivery/DiscountResolutionTest.php`
+- [x] T071 [P] [US7] Feature test area eligibility (inactive blocked) and slot selectability (inactive rejected, weekday match, not past) in `src/tests/Feature/Delivery/AvailabilityTest.php`
 
 ### Implementation
 
-- [ ] T072 [P] [US7] Migrations `delivery_areas`, `delivery_slots` (weekday model: `day_of_week`, `start_time`, `end_time`, `label_ar/label_en`), `delivery_discount_rules` in `src/database/migrations/` (indexes `delivery_areas(is_active,sort_order)`, `delivery_slots(day_of_week,is_active,sort_order)`, `delivery_discount_rules(is_active,min_subtotal)`) (data-model #11,#12,#13; R5/R6)
-- [ ] T073 [P] [US7] Models `DeliveryArea`, `DeliverySlot`, `DeliveryDiscountRule` (HasLocalizedText where applicable) in `src/app/Models/`
-- [ ] T074 [P] [US8] `DeliveryQuote` DTO (base_fee, applied_rule_id?, applied_rule_type?, discount_amount, final_fee) in `src/app/Domain/Delivery/DeliveryQuote.php`
-- [ ] T075 [US8] `DeliveryService` (`isAreaOrderable`, `quote` largest-saving/tie-break/floor-0, `isSlotSelectable`, `availableSlots(date)` by weekday) in `src/app/Domain/Delivery/DeliveryService.php` (depends on T073, T074)
-- [ ] T076 [P] [US7] Filament `DeliveryAreaResource` (name_ar/en, base_fee, active, sort) in `src/app/Filament/Resources/DeliveryAreaResource.php` (A11)
-- [ ] T077 [P] [US7] Filament `DeliverySlotResource` (label_ar/en, day_of_week, start/end time, active, sort — no capacity) in `src/app/Filament/Resources/DeliverySlotResource.php` (A12)
-- [ ] T078 [P] [US8] Filament `DeliveryDiscountRuleResource` (type, value, min_subtotal, active; validation percentage 0–100) in `src/app/Filament/Resources/DeliveryDiscountRuleResource.php` (A13)
-- [ ] T079 [US7] Filament `Settings` page (minimum order amount + business/contact info via `SettingsService`) in `src/app/Filament/Pages/ManageSettings.php` (A14)
+- [x] T072 [P] [US7] Migrations `delivery_areas`, `delivery_slots` (weekday model: `day_of_week`, `start_time`, `end_time`, `label_ar/label_en`), `delivery_discount_rules` in `src/database/migrations/` (indexes `delivery_areas(is_active,sort_order)`, `delivery_slots(day_of_week,is_active,sort_order)`, `delivery_discount_rules(is_active,min_subtotal)`) (data-model #11,#12,#13; R5/R6)
+- [x] T073 [P] [US7] Models `DeliveryArea`, `DeliverySlot`, `DeliveryDiscountRule` (HasLocalizedText where applicable) in `src/app/Models/`
+- [x] T074 [P] [US8] `DeliveryQuote` DTO (base_fee, applied_rule_id?, applied_rule_type?, discount_amount, final_fee) in `src/app/Domain/Delivery/DeliveryQuote.php`
+- [x] T075 [US8] `DeliveryService` (`isAreaOrderable`, `quote` largest-saving/tie-break/floor-0, `isSlotSelectable`, `availableSlots(date)` by weekday) in `src/app/Domain/Delivery/DeliveryService.php` (depends on T073, T074)
+- [x] T076 [P] [US7] Filament `DeliveryAreaResource` (name_ar/en, base_fee, active, sort) in `src/app/Filament/Resources/DeliveryAreaResource.php` (A11)
+- [x] T077 [P] [US7] Filament `DeliverySlotResource` (label_ar/en, day_of_week, start/end time, active, sort — no capacity) in `src/app/Filament/Resources/DeliverySlotResource.php` (A12)
+- [x] T078 [P] [US8] Filament `DeliveryDiscountRuleResource` (type, value, min_subtotal, active; validation percentage 0–100) in `src/app/Filament/Resources/DeliveryDiscountRuleResource.php` (A13)
+- [x] T079 [US7] Filament `Settings` page (minimum order amount + business/contact info via `SettingsService`) in `src/app/Filament/Pages/ManageSettings.php` (A14)
 
 **Checkpoint**: Delivery fees/discounts deterministic and tested; admin can configure delivery + settings.
 
