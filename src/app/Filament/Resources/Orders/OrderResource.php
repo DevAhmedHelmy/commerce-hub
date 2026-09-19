@@ -87,7 +87,7 @@ class OrderResource extends Resource
         return $schema->components([
             Section::make('الطلب')->columns(2)->schema([
                 TextEntry::make('order_number')->label('رقم الطلب'),
-                TextEntry::make('status')->label('الحالة')->badge()->formatStateUsing(fn (OrderStatus $s) => __($s->labelKey())),
+                TextEntry::make('status')->label('الحالة')->badge()->formatStateUsing(fn (OrderStatus $state) => __($state->labelKey())),
                 TextEntry::make('business_name')->label('العميل'),
                 TextEntry::make('phone')->label('الهاتف'),
                 TextEntry::make('delivery_area_name')->label('المنطقة'),
@@ -105,9 +105,9 @@ class OrderResource extends Resource
                 ])->columns(4),
             ]),
             Section::make('الإجمالي')->columns(3)->schema([
-                TextEntry::make('product_subtotal')->label('إجمالي المنتجات')->formatStateUsing(fn ($s) => MoneyFormatter::format(Money::fromMinor((int) $s))),
-                TextEntry::make('final_delivery_fee')->label('رسوم التوصيل')->formatStateUsing(fn ($s) => MoneyFormatter::format(Money::fromMinor((int) $s))),
-                TextEntry::make('final_total')->label('الإجمالي')->formatStateUsing(fn ($s) => MoneyFormatter::format(Money::fromMinor((int) $s))),
+                TextEntry::make('product_subtotal')->label('إجمالي المنتجات')->formatStateUsing(fn ($state) => MoneyFormatter::format(Money::fromMinor((int) $state))),
+                TextEntry::make('final_delivery_fee')->label('رسوم التوصيل')->formatStateUsing(fn ($state) => MoneyFormatter::format(Money::fromMinor((int) $state))),
+                TextEntry::make('final_total')->label('الإجمالي')->formatStateUsing(fn ($state) => MoneyFormatter::format(Money::fromMinor((int) $state))),
             ]),
         ]);
     }

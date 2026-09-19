@@ -411,15 +411,15 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY where behavioral)
 
-- [ ] T104 [P] [US6] Feature test new order becomes visible to admin via DB notification + polling (no WebSocket) in `src/tests/Feature/Admin/NewOrderVisibilityTest.php`
-- [ ] T105 [P] [US11] Feature test customer directory search + order-history view in `src/tests/Feature/Admin/CustomerDirectoryTest.php`
+- [x] T104 [P] [US6] Feature test new order becomes visible to admin via DB notification + polling (no WebSocket) in `src/tests/Feature/Admin/NewOrderVisibilityTest.php`
+- [x] T105 [P] [US11] Feature test customer directory search + order-history view in `src/tests/Feature/Admin/CustomerDirectoryTest.php`
 
 ### Implementation
 
-- [ ] T106 [US6] Emit admin **database notification** on order placement (surfaced via Filament polling) — wire in `OrderService::place` + `src/app/Notifications/NewOrderNotification.php` (R16/FR-055)
-- [ ] T107 [P] [US6] Dashboard widgets (new orders, today's orders, today's sales, recent orders) with polling in `src/app/Filament/Widgets/` (A02; efficient aggregate queries)
-- [ ] T108 [P] [US11] Filament `CustomerResource` list + search in `src/app/Filament/Resources/CustomerResource.php` (A05)
-- [ ] T109 [US11] Customer view page with profile + order history (eager-loaded) in `src/app/Filament/Resources/CustomerResource/Pages/` (A06)
+- [x] T106 [US6] Emit admin **database notification** on order placement (surfaced via Filament polling) — wire in `OrderService::place` + `src/app/Notifications/NewOrderNotification.php` (R16/FR-055)
+- [x] T107 [P] [US6] Dashboard widgets (new orders, today's orders, today's sales, recent orders) with polling in `src/app/Filament/Widgets/` (A02; efficient aggregate queries)
+- [x] T108 [P] [US11] Filament `CustomerResource` list + search in `src/app/Filament/Resources/CustomerResource.php` (A05)
+- [x] T109 [US11] Customer view page with profile + order history (eager-loaded) in `src/app/Filament/Resources/CustomerResource/Pages/` (A06)
 
 **Checkpoint**: Admins can triage new orders and inspect customers.
 

@@ -102,7 +102,7 @@ final class OrderService
      */
     public function place(Customer $customer, CheckoutInput $input): PlaceResult
     {
-        return DB::transaction(function () use ($customer, $input): PlaceResult {
+        $result = DB::transaction(function () use ($customer, $input): PlaceResult {
             // Duplicate-submit idempotency.
             if ($input->submissionToken !== null) {
                 $existing = Order::query()->where('submission_token', $input->submissionToken)->first();
@@ -192,6 +192,16 @@ final class OrderService
 
             return PlaceResult::placed($order->fresh('items'));
         });
+
+        // Notify active admins after commit (database channel; surfaced via Filament polling).
+        if ($result->isPlaced()) {
+            $admins = \App\Models\User::query()->where('is_active', true)->get();
+            if ($admins->isNotEmpty()) {
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewOrderNotification($result->order));
+            }
+        }
+
+        return $result;
     }
 
     /** Forward status change or cancellation, actor = 'admin'|'customer'. */

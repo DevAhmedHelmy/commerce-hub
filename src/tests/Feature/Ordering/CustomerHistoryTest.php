@@ -45,3 +45,10 @@ it('gates the admin orders screen by permission', function () {
     $this->actingAs(adminWithRole('orders_staff'))->get('/admin/orders')->assertOk();
     $this->actingAs(adminWithRole('pricing_staff'))->get('/admin/orders')->assertForbidden();
 });
+
+it('renders the admin order detail page with lifecycle actions', function () {
+    ['customer' => $customer, 'input' => $input] = checkoutSetup();
+    $order = app(OrderService::class)->place($customer, $input)->order;
+
+    $this->actingAs(adminWithRole('orders_staff'))->get("/admin/orders/{$order->id}")->assertOk();
+});
