@@ -244,7 +244,7 @@ Policies + `super_admin` Gate bypass; permissions never bypass business rules. S
 - [x] TB03 [US5] Policies (Product/Category/Unit/AdminAuditLog/User/Role) + `super_admin` Gate::before bypass; gate inventory-adjust action + conversion/price fields by permission
 - [x] TB04 [US5] Admin Users resource (A18: roles + is_active, super_admin-only) + Roles resource (A19: read-only view); last-active-super-admin protection (`SuperAdminGuard`); audit user/role/active changes
 - [x] TB05 [P] [US5] Tests — role matrix (can/cannot per role), 403 on unauthorized user/role screens, deactivated-admin blocked, last-super-admin safety, business rules still enforced
-- [ ] TB06 [US5] *(later-phase coupling)* Apply the same policy gating to Orders/Delivery/Pricing-tier/Offer/Settings resources as those phases are built (inventory_staff dedicated stock screen, A15)
+- [x] TB06 [US5] *(later-phase coupling)* Apply the same policy gating to Orders/Delivery/Pricing-tier/Offer/Settings resources as those phases are built (inventory_staff dedicated stock screen, A15)
 
 **Checkpoint**: five roles enforce least-privilege server-side; only super_admin manages users/roles;
 the last super_admin is protected; business rules hold regardless of permissions.
@@ -494,8 +494,8 @@ the last super_admin is protected; business rules hold regardless of permissions
 - [x] T132 [P] Seeders — delivery areas, weekday slots, a delivery discount rule, settings (minimum order + business info) in `src/database/seeders/`
 - [x] T133 [P] Seeder — sample orders across statuses for demo/dashboard in `src/database/seeders/`
 - [x] T134 Demo OTP safety — `LogOtpProvider` surfaces the code via a non-prod dev channel/banner only; guard prevents any static/test OTP behavior when `APP_ENV=production` (bind check in provider)
-- [ ] T135 [P] Staging environment instructions (env, seed, HTTPS) appended to `quickstart.md` (docs, outside `src/`)
-- [ ] T136 PWA installability manual test checklist on a supported mobile browser (docs)
+- [x] T135 [P] Staging environment instructions (env, seed, HTTPS) appended to `quickstart.md` (docs, outside `src/`)
+- [x] T136 PWA installability manual test checklist on a supported mobile browser (docs)
 
 **Checkpoint**: System is demoable to the client with realistic Arabic data.
 
@@ -505,13 +505,13 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 **Purpose**: Low-cost shared-hosting deployment (no Docker); production safety.
 
-- [ ] T137 Document `src/public` as web root + shared-hosting deploy notes in `quickstart.md` (docs)
+- [x] T137 Document `src/public` as web root + shared-hosting deploy notes in `quickstart.md` (docs)
 - [x] T138 [P] Production `.env` template (`APP_DEBUG=false`, HTTPS, `SESSION_SECURE_COOKIE=true`, real `OTP_DRIVER`, no secrets committed) in `src/.env.example`
-- [ ] T139 Production build steps — `composer install --no-dev --optimize-autoloader` (platform-pinned), `npm ci && npm run build`, `php artisan config:cache route:cache view:cache` (docs)
-- [ ] T140 [P] Writable dirs (`src/storage`, `src/bootstrap/cache`) + `php artisan storage:link` in deploy notes
-- [ ] T141 [P] Single cron `schedule:run` for maintenance (expired-OTP cleanup); document DB-queue drain as fallback-only (R16/R23)
-- [ ] T142 [P] Backup strategy (nightly MySQL dump + `storage/`) and log review (OTP never in logs) in deploy notes
-- [ ] T143 Production OTP prohibition verification (no static/test OTP in prod) + final smoke test checklist (docs)
+- [x] T139 Production build steps — `composer install --no-dev --optimize-autoloader` (platform-pinned), `npm ci && npm run build`, `php artisan config:cache route:cache view:cache` (docs)
+- [x] T140 [P] Writable dirs (`src/storage`, `src/bootstrap/cache`) + `php artisan storage:link` in deploy notes
+- [x] T141 [P] Single cron `schedule:run` for maintenance (expired-OTP cleanup); document DB-queue drain as fallback-only (R16/R23)
+- [x] T142 [P] Backup strategy (nightly MySQL dump + `storage/`) and log review (OTP never in logs) in deploy notes
+- [x] T143 Production OTP prohibition verification (no static/test OTP in prod) + final smoke test checklist (docs)
 
 **Checkpoint**: Deployable to low-cost hosting with production safety verified.
 

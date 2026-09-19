@@ -136,3 +136,39 @@ Spec + clarifications approved; design docs approved (`Approved for Technical Pl
 research + data-model + contracts + quickstart complete; Constitution Check = PASS; verified stack
 pinned. `/speckit-tasks` can now generate P1→P3 vertical slices with accompanying commercial-logic
 tests.
+
+---
+
+## 9. Staging / demo setup  `[Phase O — T135/T136]`
+
+```bash
+cd src
+cp .env.example .env && php artisan key:generate
+# set DB_* to a local/staging MySQL DB, then:
+php artisan migrate                        # never migrate:fresh on shared data
+php artisan db:seed --class=DemoSeeder     # idempotent; safe to re-run
+php artisan storage:link
+npm ci && npm run build
+```
+
+- **Demo admin** (non-production only): `admin@emdad.test` / `DEMO_ADMIN_PASSWORD` (defaults to
+  `password`; set a real value in staging). `DemoSeeder` refuses to create it when `APP_ENV=production`.
+- **Demo OTP**: `OTP_DRIVER=log` surfaces the code to the log/dev channel only; production MUST use a
+  real provider (no static/test OTP — enforced by the provider binding).
+- **PWA install check (T136)**: over HTTPS on Android Chrome → "Add to Home screen"; confirm standalone
+  launch, the offline route shows the fallback, and no authenticated page is cached.
+
+## 10. Production deployment (low-cost shared hosting, no Docker)  `[Phase P — T137..T143]`
+
+- **Web root (T137)**: point the domain/vhost at `src/public` (never expose `src/`).
+- **Env (T138)**: `APP_ENV=production`, `APP_DEBUG=false`, HTTPS `APP_URL`, `SESSION_SECURE_COOKIE=true`,
+  real `OTP_DRIVER`, generated `APP_KEY`, no secrets committed.
+- **Build (T139)**: `composer install --no-dev --optimize-autoloader` (PHP 8.2 pinned;
+  `composer check-platform-reqs` must pass — no dependency may require PHP 8.3+),
+  `npm ci && npm run build`, then `php artisan config:cache route:cache view:cache`.
+- **Writable + storage (T140)**: `src/storage` and `src/bootstrap/cache` writable; `php artisan storage:link`.
+- **Scheduler (T141)**: one cron `* * * * * php /path/src/artisan schedule:run` (expired-OTP cleanup);
+  DB queue is `sync`/fallback-only in MVP.
+- **Backups (T142)**: nightly `mysqldump` + `src/storage/app/public` archive; verify logs never contain OTP codes.
+- **Go-live smoke (T143)**: confirm `APP_DEBUG=false`, HTTPS + secure cookies, no static/test OTP in
+  prod, admin login works, a test order places and shows on the dashboard, then remove demo data.
