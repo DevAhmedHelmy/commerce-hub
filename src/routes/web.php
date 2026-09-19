@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Account\ProfileController;
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Cart\CartController;
@@ -66,6 +67,13 @@ Route::middleware('auth:customer')->group(function () {
         Route::get('/orders/success/{order}', [OrdersController::class, 'success'])->name('orders.success');
         Route::get('/orders/{order}', [OrdersController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancel'])->name('orders.cancel');
+
+        // Account (US1 / prompt 44) — persistent profile + default address (edited here, not checkout).
+        Route::get('/account', [ProfileController::class, 'show'])->name('account.index');
+        Route::get('/account/profile', [ProfileController::class, 'editProfile'])->name('account.profile');
+        Route::post('/account/profile', [ProfileController::class, 'updateProfile'])->name('account.profile.update');
+        Route::get('/account/address', [ProfileController::class, 'editAddress'])->name('account.address');
+        Route::post('/account/address', [ProfileController::class, 'updateAddress'])->name('account.address.update');
     });
 });
 

@@ -55,6 +55,7 @@ class OnboardingController extends Controller
         return view('auth.address', [
             'customer' => $customer,
             'address' => $customer->defaultAddress()->first(),
+            'areas' => \App\Models\DeliveryArea::query()->where('is_active', true)->orderBy('sort_order')->get(),
         ]);
     }
 

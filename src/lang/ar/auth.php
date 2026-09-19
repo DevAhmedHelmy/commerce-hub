@@ -33,6 +33,7 @@ return [
         'business_name' => 'اسم المنشأة',
         'contact_person_name' => 'اسم مسؤول الطلب',
         'whatsapp_phone' => 'رقم واتساب',
+        'delivery_area' => 'منطقة التوصيل',
         'address_line' => 'العنوان',
         'building' => 'المبنى',
         'floor' => 'الطابق',

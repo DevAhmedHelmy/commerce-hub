@@ -13,6 +13,19 @@
                     ['landmark', false],
                 ];
             @endphp
+            @if (($areas ?? collect())->isNotEmpty())
+                <div>
+                    <label for="delivery_area_id" class="mb-1 block text-sm font-semibold text-content">{{ __('auth.fields.delivery_area') }}</label>
+                    <select id="delivery_area_id" name="delivery_area_id"
+                        class="w-full rounded-[--radius-sm] border border-border-strong bg-surface px-4 py-3 text-base text-content focus:border-focus focus:ring-2 focus:ring-focus">
+                        <option value="">—</option>
+                        @foreach ($areas as $area)
+                            <option value="{{ $area->id }}" @selected(old('delivery_area_id', $address?->delivery_area_id) == $area->id)>{{ $area->localized('name') }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+
             @foreach ($fields as [$name, $required])
                 <div>
                     <label for="{{ $name }}" class="mb-1 block text-sm font-semibold text-content">{{ __('auth.fields.'.$name) }}</label>

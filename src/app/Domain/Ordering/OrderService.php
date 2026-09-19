@@ -125,11 +125,13 @@ final class OrderService
             $order->order_number = 'TMP-'.Str::uuid();
             $order->submission_token = $input->submissionToken;
             $order->customer_id = $customer->id;
+            $order->customer_address_id = $address->id;
             $order->business_name = $customer->business_name;
             $order->contact_person_name = $customer->contact_person_name;
             $order->phone = $customer->phone;
             $order->whatsapp_phone = $customer->whatsapp_phone;
             $order->delivery_area_name = $area->localized('name');
+            $order->delivery_area_id = $area->id; // snapshot ref
             $order->address_line = $address->address_line;
             $order->building = $address->building;
             $order->floor = $address->floor;

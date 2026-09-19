@@ -36,4 +36,9 @@ class CustomerAddress extends Model
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function deliveryArea(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryArea::class);
+    }
 }
