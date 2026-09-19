@@ -10,9 +10,10 @@ use App\Http\Controllers\Checkout\ConfirmController;
 use App\Http\Controllers\Orders\OrdersController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+use App\Http\Controllers\LandingController;
+
+// Public landing page (US10 / Phase L).
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 /*
 |--------------------------------------------------------------------------
@@ -86,20 +87,6 @@ Route::middleware('auth:customer')->group(function () {
 | Phase M. Metadata is Arabic now and localizable later.
 */
 
-Route::get('/manifest.webmanifest', function () {
-    return response()->json([
-        'name' => 'مستلزمات المطاعم',
-        'short_name' => 'المستلزمات',
-        'description' => 'منصة طلب مستلزمات المطاعم — دفع عند الاستلام.',
-        'lang' => 'ar',
-        'dir' => 'rtl',
-        'start_url' => '/',
-        'scope' => '/',
-        'display' => 'standalone',
-        'background_color' => '#ffffff',
-        'theme_color' => '#0f766e',
-        // icons[] are added in Phase M (T114/T115).
-    ], 200, ['Content-Type' => 'application/manifest+json']);
-})->name('pwa.manifest');
+Route::get('/manifest.webmanifest', [\App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 
 Route::view('/offline', 'offline')->name('pwa.offline');

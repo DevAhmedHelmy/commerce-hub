@@ -432,12 +432,12 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests
 
-- [ ] T110 [P] [US10] Feature test landing renders all sections, graceful-empty, and CTA → `/login` in `src/tests/Feature/Landing/LandingPageTest.php`
+- [x] T110 [P] [US10] Feature test landing renders all sections, graceful-empty, and CTA → `/login` in `src/tests/Feature/Landing/LandingPageTest.php`
 
 ### Implementation
 
-- [ ] T111 [US10] Landing controller + `GET /` route (reuse CatalogService/PromotionService/SettingsService) in `src/app/Http/Controllers/LandingController.php` and `src/routes/web.php`
-- [ ] T112 [P] [US10] Landing Blade C01 — header, hero, categories preview, offers, benefits, ordering steps, delivery coverage, CTA, footer/contact (no CMS) in `src/resources/views/landing/` (RTL, empty-safe)
+- [x] T111 [US10] Landing controller + `GET /` route (reuse CatalogService/PromotionService/SettingsService) in `src/app/Http/Controllers/LandingController.php` and `src/routes/web.php`
+- [x] T112 [P] [US10] Landing Blade C01 — header, hero, categories preview, offers, benefits, ordering steps, delivery coverage, CTA, footer/contact (no CMS) in `src/resources/views/landing/` (RTL, empty-safe)
 
 **Checkpoint**: Public landing page live and linked to sign-in.
 
@@ -450,15 +450,15 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests
 
-- [ ] T113 [P] [US12] Feature/asset test — manifest served, offline route present; assert SW config excludes authenticated routes in `src/tests/Feature/Pwa/PwaAssetsTest.php`
+- [x] T113 [P] [US12] Feature/asset test — manifest served, offline route present; assert SW config excludes authenticated routes in `src/tests/Feature/Pwa/PwaAssetsTest.php`
 
 ### Implementation
 
-- [ ] T114 [P] [US12] `manifest.webmanifest` (Arabic name/short_name/description, theme/background) served via route/controller in `src/app/Http/Controllers/PwaController.php`
-- [ ] T115 [P] [US12] PWA icons 192/512 + maskable in `src/public/icons/`
-- [ ] T116 [US12] Service worker `src/public/sw.js` — cache **static only** (versioned CSS/JS, icons, logo, offline page); **explicitly bypass** `/profile`, `/profile/address`, `/cart*`, `/checkout/*`, `/orders*`, `/onboarding/*`, `/otp/*`, `/verify` (no `caches.put`); network-first dynamic; no offline order; no background sync (R17)
-- [ ] T117 [P] [US12] Offline fallback page `/offline` (static Blade) in `src/resources/views/offline.blade.php`
-- [ ] T118 [US12] Install affordance + SW registration/versioning in `src/resources/js/app.js`; ensure order confirm never reports success without server confirmation
+- [x] T114 [P] [US12] `manifest.webmanifest` (Arabic name/short_name/description, theme/background) served via route/controller in `src/app/Http/Controllers/PwaController.php`
+- [x] T115 [P] [US12] PWA icons 192/512 + maskable in `src/public/icons/`
+- [x] T116 [US12] Service worker `src/public/sw.js` — cache **static only** (versioned CSS/JS, icons, logo, offline page); **explicitly bypass** `/profile`, `/profile/address`, `/cart*`, `/checkout/*`, `/orders*`, `/onboarding/*`, `/otp/*`, `/verify` (no `caches.put`); network-first dynamic; no offline order; no background sync (R17)
+- [x] T117 [P] [US12] Offline fallback page `/offline` (static Blade) in `src/resources/views/offline.blade.php`
+- [x] T118 [US12] Install affordance + SW registration/versioning in `src/resources/js/app.js`; ensure order confirm never reports success without server confirmation
 
 **Checkpoint**: PWA installable; private content never cached; offline integrity holds.
 
