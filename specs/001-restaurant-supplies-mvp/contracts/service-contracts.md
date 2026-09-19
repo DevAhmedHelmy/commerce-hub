@@ -236,6 +236,24 @@ SettingsService {
 }
 ```
 
+## AdminAuditService  `[prompt 39, Principle V/VI]`
+
+```
+AdminAuditService {
+  AdminAuditLog record(string action, ?Model auditable, array old, array new, array metadata);
+  array  changes(Model m, string[] fields);   // {old,new} for the changed audited fields
+  array  snapshot(Model m, string[] fields);   // current values (create/delete events)
+}
+```
+
+Single, consistent writer of `admin_audit_logs` (§9). Captures actor (`auth()->id()`, null = system),
+neutral `action` code (`AuditAction`), morph target, only audited old/new fields (money as integer
+minor units), and safe request metadata (ip/ua). **Redacts** sensitive fragments
+(`password|secret|token|otp|code_hash|api_key|credential`) before persistence (§8). Callers invoke it
+**after** a successful mutation so a rolled-back change never logs a false success (§10). Wiring:
+model observers (`Product`/`ProductUnit`/`Unit`/`Setting`) + `AdjustInventoryAction` (references
+`inventory_adjustment_id`, never replacing the ledger). Records are immutable/append-only.
+
 ## MoneyFormatter (presentation boundary)  `[R2/R13, §37, D2]`
 
 ```

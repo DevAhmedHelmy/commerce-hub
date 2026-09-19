@@ -99,6 +99,7 @@ Arabic-first (RTL). Every action **calls domain services**; no rule duplication 
 | A14 | Settings Page | minimum order + business/contact info | SettingsService |
 | A15 | Inventory (prompt 32/37) | product **sub-unit stock** column (admin sees `primary + sub`), add/remove/correct in **either unit** (converted to sub-units, never < 0), **read-only adjustment history** (input unit + normalized delta), in-/out-of-stock filter | InventoryService / AdjustInventoryAction / ProductUnitConverter |
 | A16 | Units Resource (prompt 37) | reusable units CRUD (`code`, `name_ar`/`name_en`, active, sort); disable-not-delete when in use | model |
+| A17 | Audit Log Resource (prompt 39) | **read-only** list + view of `admin_audit_logs`; filters user/action/type/date-range; human-readable old→new diff; **no create/edit/delete** (append-only) | AdminAuditService |
 
 Notes: **status change** (A04) is the highest-frequency op → one-click next-status + cancel via
 `OrderService::transition` (validated, R10). **Availability toggle** (A08) inline. Product admin is

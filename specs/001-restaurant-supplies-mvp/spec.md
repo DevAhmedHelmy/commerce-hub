@@ -766,6 +766,28 @@ justified; **MAY** = optional/permitted.
 4. **Given** a product with non-zero stock, **When** admin tries to change its conversion factor,
    **Then** the change is blocked until stock is reset/corrected.
 
+### Functional Requirements — Admin Audit Log (prompt 39, CORE MVP)
+
+- **FR-087**: The system MUST record critical admin write actions in an **append-only** audit trail
+  capturing the actor, the entity, the action, old values, new values, and timestamp.
+- **FR-088**: Audited actions MUST cover (as each area exists) product create/update/activate/image
+  changes, unit create/update/activate and conversion changes, base-price/tier/offer changes,
+  manual inventory add/remove/correct, order status changes and cancellations, and critical
+  delivery/settings changes. Monetary old/new values MUST be stored in integer minor units.
+- **FR-089**: The audit trail MUST reference — never replace — the authoritative inventory ledger;
+  MUST redact sensitive fields (passwords, OTP/codes, tokens, secrets); MUST be viewable only by
+  authorized admins via a **read-only** screen; and MUST NOT be editable/deletable through the admin UI.
+
+**Acceptance Scenarios**:
+
+1. **Given** an admin edits a product's base price, **When** the change is saved, **Then** an audit
+   entry records the old and new price (minor units), the actor, and the timestamp.
+2. **Given** an admin adds stock, **When** the ledger row is written, **Then** the audit entry
+   references the inventory adjustment id and does not duplicate the ledger.
+3. **Given** a stock change that fails (would go below zero), **When** it is rejected, **Then** no
+   audit entry is created.
+4. **Given** a customer session, **When** it requests the audit screen, **Then** access is denied.
+
 ### Functional Requirements — Admin Users & Authorization
 
 - **FR-063**: The system MUST support multiple authorized admin users who may manage the

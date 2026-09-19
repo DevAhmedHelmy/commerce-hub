@@ -13,12 +13,14 @@ identifiers use ULIDs.
 where soft-delete is justified (below). All **domain identifiers are language-neutral** (statuses,
 unit `code`, discount `type`) — Arabic/English are presentation labels, not stored business values.
 
-**Core MVP tables: 19** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
+**Core MVP tables: 20** (excluding Laravel framework tables: `sessions`, `cache`, `jobs`,
 `failed_jobs`, `job_batches`, `migrations`, `password_reset_tokens` for admins;
 `notifications` is a framework table surfaced for admin new-order alerts). **Simple inventory
 (prompt 32)** adds `inventory_adjustments` (#18); **two-level units (prompt 37)** adds a reusable
 `units` table (#19) and re-shapes `product_units` (#6) into a product↔unit configuration with a
 per-product primary/sub conversion and a single **sub-unit** stock balance — see §6, §18, §19.
+**Admin audit log (prompt 39)** adds `admin_audit_logs` (#20), an append-only trail of critical
+admin actions that references — never replaces — the inventory ledger.
 
 ---
 
@@ -300,6 +302,27 @@ per-product primary/sub conversion and a single **sub-unit** stock balance — s
 - **Lifecycle**: `is_active` toggle; **never hard-delete a unit referenced by a product** (restrict) —
   prefer deactivate (prompt 37 §19). Editing a unit's display name does not alter historical order
   snapshots (they store the unit code/name at order time).
+
+## 20. `admin_audit_logs` — append-only admin audit trail  `[prompt 39, Principle V/VI]`
+- **Purpose**: record critical admin write actions (who / what entity / what action / old→new /
+  when). **Append-only**: no `updated_at`, and the admin UI exposes no edit/delete. The inventory
+  ledger (`inventory_adjustments`, §18) remains the authoritative stock history — audit rows only
+  **reference** it via `metadata.inventory_adjustment_id` (prompt 39 §7), never replace it.
+- **Columns**: `id`; `user_id` FK → `users.id` (nullable, `nullOnDelete` — null = system action);
+  `action` (**language-neutral** code: `created|updated|deleted|activated|deactivated|price_changed|
+  stock_added|stock_removed|stock_corrected|order_status_changed|order_cancelled`); `auditable_type`
+  + `auditable_id` (morph, nullable); `old_values` JSON; `new_values` JSON (only audited business
+  fields — money as **integer minor units**, never formatted currency); `metadata` JSON; `ip_address`;
+  `user_agent`; `created_at` only.
+- **Redaction**: sensitive field fragments (`password|secret|token|otp|code_hash|api_key|credential`)
+  are replaced with `[redacted]` centrally in `AdminAuditService` before persistence (prompt 39 §8).
+- **Indexes**: `INDEX(user_id)`; `INDEX(action)`; `INDEX(auditable_type, auditable_id)`;
+  `INDEX(created_at)`.
+- **Wiring** (prompt 39 §9): a single `AdminAuditService` is the only writer. Model observers
+  (`Product`, `ProductUnit`, `Unit`, `Setting`) capture create/update/delete; `AdjustInventoryAction`
+  audits manual stock changes after the ledger write succeeds. Order/delivery/pricing-tier/offer
+  hooks are added as those phases land. Audit rows are written only after the mutation succeeds, so a
+  rolled-back change produces no false-success entry (§10).
 
 ## (Framework) `notifications` — database notifications  `[FR-055, R16]`
 - Laravel's standard `notifications` table (morphable `notifiable`, `type`, `data` JSON, `read_at`)

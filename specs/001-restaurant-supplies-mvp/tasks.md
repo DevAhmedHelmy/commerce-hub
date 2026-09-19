@@ -215,6 +215,24 @@ factor changes.
 
 ---
 
+## Phase D4 — Admin Audit Log (prompt 39, cross-cutting administration)
+
+**Purpose**: append-only trail of critical admin actions (who/what/action/old→new/when). One central
+`AdminAuditService`; sensitive fields redacted; the inventory ledger stays the stock truth and is only
+referenced. Framework + existing entities wired now; order/delivery/pricing hooks land with their phases.
+
+- [x] TA01 [US5] `admin_audit_logs` migration (immutable, JSON old/new/metadata, indexes) + `AdminAuditLog` model + `AdminAuditService` (central writer, actor/ip/ua capture, sensitive-field redaction) + `AuditAction` neutral codes
+- [x] TA02 [US5] Central wiring via observers (`Product`/`ProductUnit`/`Unit`/`Setting`): create/update/delete; base-price → `price_changed`; skip stock-only `ProductUnit` saves (own ledger)
+- [x] TA03 [US5] Inventory manual add/remove/correct audited in `AdjustInventoryAction` referencing `inventory_adjustment_id`; no false-success audit when the stock change throws
+- [x] TA04 [US5] Read-only Filament Audit Log resource (list + view; filters user/action/type/date-range; Arabic RTL; human-readable old→new diff via `AuditDiffFormatter`); no create/edit/delete
+- [x] TA05 [P] [US5] Tests — product update, base-price old/new, inventory reference, failed-tx→no audit, settings change, redaction, admin can view, guest/customer blocked, resource read-only
+- [ ] TA06 [US5] *(later-phase coupling)* Audit hooks for price tiers/offers (Phase E), order status change + cancellation (Phase I/J), delivery area/slot/discount + settings screens (Phase G/K)
+
+**Checkpoint**: every critical admin write on existing entities produces an immutable, redacted audit
+row; admins have a read-only Arabic audit screen; inventory ledger remains authoritative.
+
+---
+
 ## Phase E — Pricing & Offers (US3 pricing, US5 admin) — BUSINESS-CRITICAL
 
 **Goal**: Deterministic unit/tier/offer pricing with the lower-of rule; admin manages tiers + offers.
