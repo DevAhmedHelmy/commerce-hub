@@ -258,21 +258,22 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY — NON-OPTIONAL)
 
-- [ ] T048 [P] [US3] Unit test base price + tier boundaries **4→5** and **9→10** (up and down) in `src/tests/Unit/Pricing/TierBoundaryTest.php`
-- [ ] T049 [P] [US3] Unit test offer eligibility (active in-range applies; expired/inactive/out-of-range never applies) in `src/tests/Unit/Pricing/OfferEligibilityTest.php`
-- [ ] T050 [P] [US3] Unit test **lower-of** tier vs offer, never stacked (`200/170/160→160`; `200/150/160→150`; only-one; neither→normal) + `PriceResult` fields/source in `src/tests/Unit/Pricing/LowerOfRuleTest.php`
-- [ ] T051 [P] [US3] Unit test flat-priced unit (no tiers → no tier messaging) and `baselineFromPrice` in `src/tests/Unit/Pricing/BaselinePriceTest.php`
+- [x] T048 [P] [US3] Unit test base price + tier boundaries **4→5** and **9→10** (up and down) in `src/tests/Unit/Pricing/TierBoundaryTest.php`
+- [x] T049 [P] [US3] Unit test offer eligibility (active in-range applies; expired/inactive/out-of-range never applies) in `src/tests/Unit/Pricing/OfferEligibilityTest.php`
+- [x] T050 [P] [US3] Unit test **lower-of** tier vs offer, never stacked (`200/170/160→160`; `200/150/160→150`; only-one; neither→normal) + `PriceResult` fields/source in `src/tests/Unit/Pricing/LowerOfRuleTest.php`
+- [x] T051 [P] [US3] Unit test flat-priced unit (no tiers → no tier messaging) and `baselineFromPrice` in `src/tests/Unit/Pricing/BaselinePriceTest.php`
 
 ### Implementation
 
-- [ ] T052 [P] [US5] Migrations `product_price_tiers`, `product_offers` in `src/database/migrations/` (indexes `product_price_tiers(product_unit_id,min_quantity)`, `product_offers(product_unit_id,is_active,starts_at,ends_at)`; offer `title_ar/title_en`) (data-model #7,#8; R14)
-- [ ] T053 [P] [US5] Models `ProductPriceTier`, `ProductOffer` (casts; validity scopes) in `src/app/Models/`
-- [ ] T054 [P] [US3] `PriceResult` DTO in `src/app/Domain/Pricing/PriceResult.php` (base/tier?/offer?/applied/applied_source/unit_saving/quantity/line_total)
-- [ ] T055 [US3] `PromotionService::activeOfferFor(unit, at)` (server-evaluated validity) in `src/app/Domain/Promotions/PromotionService.php` (depends on T053)
-- [ ] T056 [US3] `PricingService::priceFor(unit, qty, at)` (lower-of, deterministic) + `baselineFromPrice()` in `src/app/Domain/Pricing/PricingService.php` (depends on T053, T054, T055)
-- [ ] T057 [US2] Wire product detail + listing cards to real `PricingService` (detail = full evaluation; cards = baseline only, §44) in `src/app/Http/Controllers/Catalog/` and card component
-- [ ] T058 [US5] Admin pricing tiers management (relation manager under `ProductResource` Pricing tab, non-overlapping ascending validation) in `src/app/Filament/Resources/ProductResource/` (calls model/service)
-- [ ] T059 [US5] Filament `OfferResource` cross-product (normal/offer price, dates, active) in `src/app/Filament/Resources/OfferResource.php` (A10)
+- [x] T052 [P] [US5] Migrations `product_price_tiers`, `product_offers` (indexes; offer `title_ar/title_en`) (data-model #7,#8; R14)
+- [x] T053 [P] [US5] Models `ProductPriceTier`, `ProductOffer` (casts; validity scopes)
+- [x] T054 [P] [US3] `PriceResult` DTO in `src/app/Domain/Pricing/PriceResult.php` (base/tier?/offer?/applied/applied_source/unit_saving/quantity/line_total)
+- [x] T055 [US3] `PromotionService::activeOfferFor(unit, at)` (server-evaluated validity) in `src/app/Domain/Promotions/PromotionService.php`
+- [x] T056 [US3] `PricingService::priceFor(unit, qty, at)` (lower-of, deterministic) + `baselineFromPrice()` in `src/app/Domain/Pricing/PricingService.php`
+- [x] T057 [US2] Product detail wired to real `PricingService` (effective price re-prices by quantity via lower-of; offer badge); cards show baseline base price
+- [x] T058 [US5] Admin pricing tiers management (per-unit repeater action on `UnitsRelationManager`, ascending unique thresholds; gated by `pricing.manage_tiers`)
+- [x] T059 [US5] Filament `OfferResource` cross-product (offer price, dates, active; gated by `pricing.manage_offers`) (A10)
+- [x] TE-audit [US5] Pricing changes audited (prompt 39): base price (ProductUnit), tiers, offers → `admin_audit_logs`
 
 **Checkpoint**: Pricing is deterministic, explainable, tested at boundaries; admin manages tiers/offers.
 

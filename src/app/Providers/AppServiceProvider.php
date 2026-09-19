@@ -5,11 +5,15 @@ namespace App\Providers;
 use App\Domain\Auth\Contracts\OtpProvider;
 use App\Domain\Auth\Providers\LogOtpProvider;
 use App\Models\Product;
+use App\Models\ProductOffer;
+use App\Models\ProductPriceTier;
 use App\Models\ProductUnit;
 use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
 use App\Observers\ProductObserver;
+use App\Observers\ProductOfferObserver;
+use App\Observers\ProductPriceTierObserver;
 use App\Observers\ProductUnitObserver;
 use App\Observers\SettingObserver;
 use App\Observers\UnitObserver;
@@ -51,6 +55,8 @@ class AppServiceProvider extends ServiceProvider
         Unit::observe(UnitObserver::class);
         Setting::observe(SettingObserver::class);
         User::observe(UserObserver::class);
+        ProductPriceTier::observe(ProductPriceTierObserver::class);
+        ProductOffer::observe(ProductOfferObserver::class);
 
         // RBAC (prompt 40): super_admin bypasses every ability; the package Role model lives
         // outside policy auto-discovery, so its policy is registered explicitly.

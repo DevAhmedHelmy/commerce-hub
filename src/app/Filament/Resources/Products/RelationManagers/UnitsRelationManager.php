@@ -15,10 +15,12 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Illuminate\Support\Facades\DB;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -87,6 +89,7 @@ class UnitsRelationManager extends RelationManager
             ])
             ->recordActions([
                 $this->adjustStockAction(),
+                $this->manageTiersAction(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
@@ -95,6 +98,47 @@ class UnitsRelationManager extends RelationManager
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Manage this unit's quantity price tiers (prompt 41 §14). Ascending thresholds are unique per
+     * unit; prices are entered in whole EGP and stored as minor units. Gated by pricing.manage_tiers.
+     */
+    private function manageTiersAction(): Action
+    {
+        return Action::make('manageTiers')->label('شرائح الكمية')->icon('heroicon-o-bars-3-bottom-left')
+            ->visible(fn (): bool => (bool) auth()->user()?->can('pricing.manage_tiers'))
+            ->authorize(fn (): bool => (bool) auth()->user()?->can('pricing.manage_tiers'))
+            ->fillForm(fn (ProductUnit $record): array => [
+                'tiers' => $record->priceTiers()->orderBy('min_quantity')->get()
+                    ->map(fn ($t) => [
+                        'min_quantity' => $t->min_quantity,
+                        'unit_price' => $t->unit_price / 100,
+                        'is_active' => $t->is_active,
+                    ])->all(),
+            ])
+            ->schema([
+                Repeater::make('tiers')->label('الشرائح')->addActionLabel('إضافة شريحة')->schema([
+                    TextInput::make('min_quantity')->label('الحد الأدنى للكمية')->numeric()->required()->minValue(1),
+                    TextInput::make('unit_price')->label('سعر الوحدة (ج)')->numeric()->required()->minValue(1),
+                    Toggle::make('is_active')->label('نشط')->default(true),
+                ])->columns(3)->defaultItems(0),
+            ])
+            ->action(function (array $data, ProductUnit $record): void {
+                DB::transaction(function () use ($data, $record): void {
+                    $keep = [];
+                    foreach ($data['tiers'] ?? [] as $row) {
+                        $min = (int) $row['min_quantity'];
+                        $keep[] = $min;
+                        $record->priceTiers()->updateOrCreate(
+                            ['min_quantity' => $min],
+                            ['unit_price' => (int) round((float) $row['unit_price'] * 100), 'is_active' => (bool) ($row['is_active'] ?? true)],
+                        );
+                    }
+                    $record->priceTiers()->when($keep !== [], fn ($q) => $q->whereNotIn('min_quantity', $keep))->delete();
+                });
+                Notification::make()->title('تم تحديث شرائح السعر')->success()->send();
+            });
     }
 
     private function adjustStockAction(): Action

@@ -63,3 +63,14 @@ function superAdmin(): App\Models\User
 {
     return adminWithRole(Database\Seeders\RolesAndPermissionsSeeder::ROLE_SUPER_ADMIN);
 }
+
+/** A single sellable product unit with the given base price (minor units) for pricing tests. */
+function pricingUnit(int $baseMinor): App\Models\ProductUnit
+{
+    $product = App\Models\Product::factory()->create();
+
+    return App\Models\ProductUnit::factory()->create([
+        'product_id' => $product->id,
+        'base_price' => $baseMinor,
+    ]);
+}
