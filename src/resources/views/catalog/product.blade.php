@@ -108,10 +108,15 @@
                 <p class="mt-4 text-sm font-semibold text-muted">{{ __('inventory.out_of_stock') }}</p>
             </template>
 
-            <button type="button" :disabled="!units.find(u => u.id === unitId)?.orderable"
-                class="mt-6 w-full rounded-[--radius-sm] bg-primary px-4 py-3 text-base font-semibold text-inverse hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-50">
-                {{ __('catalog.add_to_cart') }}
-            </button>
+            <form method="POST" action="{{ route('cart.items.store') }}" class="mt-6">
+                @csrf
+                <input type="hidden" name="product_unit_id" :value="unitId">
+                <input type="hidden" name="quantity" :value="qty">
+                <button type="submit" :disabled="!units.find(u => u.id === unitId)?.orderable"
+                    class="w-full rounded-[--radius-sm] bg-primary px-4 py-3 text-base font-semibold text-inverse hover:bg-primary-strong disabled:cursor-not-allowed disabled:opacity-50">
+                    {{ __('catalog.add_to_cart') }}
+                </button>
+            </form>
         </div>
     @endif
 

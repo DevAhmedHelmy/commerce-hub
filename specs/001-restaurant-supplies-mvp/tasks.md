@@ -286,18 +286,18 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY)
 
-- [ ] T060 [P] [US3] Feature test cart add/update/remove + tier recalculation on quantity change in `src/tests/Feature/Cart/CartOperationsTest.php`
-- [ ] T061 [P] [US3] Feature test unavailable item flagged & excluded from valid checkout; offer expiry updates estimate in `src/tests/Feature/Cart/CartAvailabilityTest.php`
-- [ ] T062 [P] [US3] Unit/feature test minimum order on effective subtotal — **499 blocked / 500 allowed** (excludes delivery) in `src/tests/Feature/Cart/MinimumOrderTest.php`
+- [x] T060 [P] [US3] Feature test cart add/update/remove + tier recalculation on quantity change in `src/tests/Feature/Cart/CartOperationsTest.php`
+- [x] T061 [P] [US3] Feature test unavailable item flagged & excluded from valid checkout; offer expiry updates estimate in `src/tests/Feature/Cart/CartAvailabilityTest.php`
+- [x] T062 [P] [US3] Unit/feature test minimum order on effective subtotal — **499 blocked / 500 allowed** (excludes delivery) in `src/tests/Feature/Cart/MinimumOrderTest.php`
 
 ### Implementation
 
-- [ ] T063 [P] [US3] Migrations `carts` (**`UNIQUE(customer_id)`**, no status column) and `cart_items` (`UNIQUE(cart_id,product_unit_id)`, `quantity>=1`, optional non-authoritative `last_seen_unit_price`) in `src/database/migrations/` (data-model #9,#10; R4)
-- [ ] T064 [P] [US3] Models `Cart`, `CartItem` in `src/app/Models/`
-- [ ] T065 [US3] `CartView` DTO (lines with `PriceResult` + availability flags, `product_subtotal`, `meets_minimum`, `minimum_order_amount`, `remaining_to_minimum`) in `src/app/Domain/Cart/CartView.php`
-- [ ] T066 [US3] `CartService` (`getOrCreate` single row, `add`, `updateQuantity`, `remove`, `view` recompute via PricingService + SettingsService) in `src/app/Domain/Cart/CartService.php` (depends on T056, T023, T064)
-- [ ] T067 [US3] Cart controller + routes `/cart` (C10), `POST /cart/items`, `PATCH /cart/items/{item}`, `DELETE /cart/items/{item}` in `src/app/Http/Controllers/Cart/` and `src/routes/web.php` (auth:customer + onboarded)
-- [ ] T068 [P] [US3] Cart Blade C10 with quantity/unit controls, estimate labels (FR-028), min-order progress, unavailable flags, **no delivery-fee estimate**, in `src/resources/views/cart/` + `src/resources/views/components/cart-item.blade.php`
+- [x] T063 [P] [US3] Migrations `carts` (**`UNIQUE(customer_id)`**, no status column) and `cart_items` (`UNIQUE(cart_id,product_unit_id)`, `quantity>=1`, optional non-authoritative `last_seen_unit_price`) in `src/database/migrations/` (data-model #9,#10; R4)
+- [x] T064 [P] [US3] Models `Cart`, `CartItem` in `src/app/Models/`
+- [x] T065 [US3] `CartView` DTO (lines with `PriceResult` + availability flags, `product_subtotal`, `meets_minimum`, `minimum_order_amount`, `remaining_to_minimum`) in `src/app/Domain/Cart/CartView.php`
+- [x] T066 [US3] `CartService` (`getOrCreate` single row, `add`, `updateQuantity`, `remove`, `view` recompute via PricingService + SettingsService) in `src/app/Domain/Cart/CartService.php` (depends on T056, T023, T064)
+- [x] T067 [US3] Cart controller + routes `/cart` (C10), `POST /cart/items`, `PATCH /cart/items/{item}`, `DELETE /cart/items/{item}` in `src/app/Http/Controllers/Cart/` and `src/routes/web.php` (auth:customer + onboarded)
+- [x] T068 [P] [US3] Cart Blade C10 with quantity/unit controls, estimate labels (FR-028), min-order progress, unavailable flags, **no delivery-fee estimate**, in `src/resources/views/cart/` + `src/resources/views/components/cart-item.blade.php`
 
 **Checkpoint**: US3 cart works end-to-end with tested pricing and minimum-order rules.
 

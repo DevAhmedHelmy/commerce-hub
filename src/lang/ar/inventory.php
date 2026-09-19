@@ -16,6 +16,7 @@ return [
     'stock' => 'المخزون',
     'in_stock' => 'متوفر',
     'out_of_stock' => 'غير متوفر',
+    'insufficient' => 'الكمية المطلوبة غير متوفرة حالياً',
     'low_stock' => 'مخزون منخفض',
 
     'actions' => [

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\OtpController;
+use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\Catalog\CatalogController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,12 @@ Route::middleware('auth:customer')->group(function () {
         Route::get('/categories/{category}', [CatalogController::class, 'category'])->name('categories.show');
         Route::get('/search', [CatalogController::class, 'search'])->name('search');
         Route::get('/products/{product}', [CatalogController::class, 'product'])->name('products.show');
+
+        // Cart (US3 / Phase F) — persistent DB cart; server-recomputed; no stock reservation.
+        Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+        Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
+        Route::patch('/cart/items/{item}', [CartController::class, 'update'])->name('cart.items.update');
+        Route::delete('/cart/items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
     });
 });
 
