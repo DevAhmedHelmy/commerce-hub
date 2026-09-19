@@ -29,4 +29,37 @@ enum OrderStatus: string
     {
         return array_map(static fn (self $c): string => $c->value, self::cases());
     }
+
+    /**
+     * Allowed forward transitions (prompt 42 §10, R10) — cancellation follows the matrix below.
+     *
+     * @return list<self>
+     */
+    public function forwardTransitions(): array
+    {
+        return match ($this) {
+            self::New => [self::Confirmed],
+            self::Confirmed => [self::Preparing],
+            self::Preparing => [self::OutForDelivery],
+            self::OutForDelivery => [self::Delivered],
+            self::Delivered, self::Cancelled => [],
+        };
+    }
+
+    public function isTerminal(): bool
+    {
+        return $this === self::Delivered || $this === self::Cancelled;
+    }
+
+    /** Admin may cancel any non-terminal order (new/confirmed/preparing/out_for_delivery). */
+    public function isAdminCancellable(): bool
+    {
+        return ! $this->isTerminal();
+    }
+
+    /** Customers may self-cancel only while the order is still new. */
+    public function isCustomerCancellable(): bool
+    {
+        return $this === self::New;
+    }
 }

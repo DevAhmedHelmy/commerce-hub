@@ -74,3 +74,34 @@ function pricingUnit(int $baseMinor): App\Models\ProductUnit
         'base_price' => $baseMinor,
     ]);
 }
+
+/**
+ * Build a placeable checkout scenario: onboarded customer, active area + matching future slot,
+ * default address, and one in-stock sub-unit line already in the cart. Returns the pieces + a
+ * ready CheckoutInput.
+ *
+ * @return array{customer: App\Models\Customer, input: App\Domain\Ordering\DTO\CheckoutInput, product: App\Models\Product, sub: App\Models\ProductUnit}
+ */
+function checkoutSetup(int $qty = 1, int $subStock = 100, int $subPrice = 50000): array
+{
+    $customer = App\Models\Customer::factory()->onboarded()->create();
+    $area = App\Models\DeliveryArea::factory()->create(['base_fee' => 3000]);
+    $date = Illuminate\Support\Carbon::now()->addDay()->startOfDay();
+    $slot = App\Models\DeliverySlot::factory()->create(['day_of_week' => $date->isoWeekday()]);
+    $address = App\Models\CustomerAddress::create([
+        'customer_id' => $customer->id, 'delivery_area_id' => $area->id,
+        'is_default' => true, 'address_line' => 'شارع ١',
+    ]);
+    $product = App\Models\Product::factory()->withUnits(conversion: 12, subStock: $subStock, subPrice: $subPrice)->create();
+    $sub = $product->subUnit()->first();
+    app(App\Domain\Cart\CartService::class)->add($customer, $sub, $qty);
+
+    $input = new App\Domain\Ordering\DTO\CheckoutInput(
+        addressId: $address->id,
+        deliveryDate: $date->toDateString(),
+        slotId: $slot->id,
+        submissionToken: (string) Illuminate\Support\Str::uuid(),
+    );
+
+    return compact('customer', 'input', 'product', 'sub');
+}

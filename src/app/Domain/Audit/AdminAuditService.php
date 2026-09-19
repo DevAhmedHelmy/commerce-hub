@@ -38,7 +38,8 @@ final class AdminAuditService
         array $metadata = [],
     ): AdminAuditLog {
         return AdminAuditLog::create([
-            'user_id' => auth()->id(),
+            // Actor is always an admin (web guard) — never a customer; null = system/customer action.
+            'user_id' => auth('web')->id(),
             'action' => $action,
             'auditable_type' => $auditable?->getMorphClass(),
             'auditable_id' => $auditable?->getKey(),

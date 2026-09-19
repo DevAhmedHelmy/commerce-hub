@@ -4,6 +4,9 @@ use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\OtpController;
 use App\Http\Controllers\Cart\CartController;
 use App\Http\Controllers\Catalog\CatalogController;
+use App\Http\Controllers\Checkout\CheckoutController;
+use App\Http\Controllers\Checkout\ConfirmController;
+use App\Http\Controllers\Orders\OrdersController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -51,6 +54,18 @@ Route::middleware('auth:customer')->group(function () {
         Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
         Route::patch('/cart/items/{item}', [CartController::class, 'update'])->name('cart.items.update');
         Route::delete('/cart/items/{item}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+
+        // Checkout (US4 / Phase H+I) — two steps + transactional placement.
+        Route::get('/checkout/delivery', [CheckoutController::class, 'delivery'])->name('checkout.delivery');
+        Route::post('/checkout/delivery', [CheckoutController::class, 'deliveryStore'])->name('checkout.delivery.store');
+        Route::get('/checkout/review', [CheckoutController::class, 'review'])->name('checkout.review');
+        Route::post('/checkout/confirm', [ConfirmController::class, 'confirm'])->name('checkout.confirm');
+
+        // Orders (US9 / Phase I+J) — customer history, details, self-cancel.
+        Route::get('/orders', [OrdersController::class, 'index'])->name('orders.index');
+        Route::get('/orders/success/{order}', [OrdersController::class, 'success'])->name('orders.success');
+        Route::get('/orders/{order}', [OrdersController::class, 'show'])->name('orders.show');
+        Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancel'])->name('orders.cancel');
     });
 });
 

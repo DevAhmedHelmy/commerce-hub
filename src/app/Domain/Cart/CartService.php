@@ -68,6 +68,18 @@ final class CartService
         $item->delete();
     }
 
+    /** Snapshot current effective prices as "last seen" — called when the customer views checkout review. */
+    public function acknowledgePrices(Customer $customer): void
+    {
+        $cart = $this->getOrCreate($customer);
+        $cart->load('items.productUnit');
+
+        foreach ($cart->items as $item) {
+            $item->last_seen_unit_price = $this->pricing->priceFor($item->productUnit, $item->quantity)->applied->minorUnits;
+            $item->save();
+        }
+    }
+
     /** Recompute the full cart for display: effective prices, availability, minimum-order progress. */
     public function view(Customer $customer): CartView
     {

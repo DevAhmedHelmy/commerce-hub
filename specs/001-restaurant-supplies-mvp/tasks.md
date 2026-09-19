@@ -337,17 +337,17 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY)
 
-- [ ] T080 [P] [US4] Feature test checkout review builds correct summary + blocks below minimum in `src/tests/Feature/Checkout/ReviewSummaryTest.php`
-- [ ] T081 [P] [US4] Feature test changed-terms detection — price change, expired offer, out-of-stock, unit inactive, delivery-fee change, discount change, inactive slot, inactive area → review required, no placement in `src/tests/Feature/Checkout/ChangedTermsTest.php`
+- [x] T080 [P] [US4] Feature test checkout review builds correct summary + blocks below minimum in `src/tests/Feature/Checkout/ReviewSummaryTest.php`
+- [x] T081 [P] [US4] Feature test changed-terms detection — price change, expired offer, out-of-stock, unit inactive, delivery-fee change, discount change, inactive slot, inactive area → review required, no placement in `src/tests/Feature/Checkout/ChangedTermsTest.php`
 
 ### Implementation
 
-- [ ] T082 [P] [US4] DTOs `CheckoutReview`, `Change`, `Problem`, `CheckoutInput` in `src/app/Domain/Ordering/DTO/` (message_key = translation keys, never branched on)
-- [ ] T083a [US4] Revalidation collectors — recompute each cart line (product active/available, unit active, price/tier/offer via `PricingService`), effective subtotal + minimum-order check, and `DeliveryQuote` (area active, fee, discount, slot selectable) in `src/app/Domain/Ordering/CheckoutRevalidator.php` (depends on T056, T066, T075, T023)
-- [ ] T083b [US4] `OrderService::review(customer, CheckoutInput)` — assemble `CheckoutReview` from collectors, build `changes[]` (diff vs last-seen terms) + `blockers[]` (inactive area/slot, OoS, below-minimum) in `src/app/Domain/Ordering/OrderService.php` (depends on T083a, T082)
-- [ ] T084 [US4] Checkout controllers + routes `GET/POST /checkout/delivery` (C11), `GET /checkout/review` (C12) in `src/app/Http/Controllers/Checkout/` and `src/routes/web.php`
-- [ ] T085 [P] [US4] Blade C11 (saved-address reuse/edit, area, delivery date, slot, COD) and C12 (full summary, changed-terms state, confirm CTA) in `src/resources/views/checkout/` (RTL, states)
-- [ ] T086 [US4] `CheckoutInput` Form Request + delivery-step validation (active area, selectable slot, not-past date) in `src/app/Http/Requests/Checkout/CheckoutDeliveryRequest.php`
+- [x] T082 [P] [US4] DTOs `CheckoutReview`, `Change`, `Problem`, `CheckoutInput` in `src/app/Domain/Ordering/DTO/` (message_key = translation keys, never branched on)
+- [x] T083a [US4] Revalidation collectors — recompute each cart line (product active/available, unit active, price/tier/offer via `PricingService`), effective subtotal + minimum-order check, and `DeliveryQuote` (area active, fee, discount, slot selectable) in `src/app/Domain/Ordering/CheckoutRevalidator.php` (depends on T056, T066, T075, T023)
+- [x] T083b [US4] `OrderService::review(customer, CheckoutInput)` — assemble `CheckoutReview` from collectors, build `changes[]` (diff vs last-seen terms) + `blockers[]` (inactive area/slot, OoS, below-minimum) in `src/app/Domain/Ordering/OrderService.php` (depends on T083a, T082)
+- [x] T084 [US4] Checkout controllers + routes `GET/POST /checkout/delivery` (C11), `GET /checkout/review` (C12) in `src/app/Http/Controllers/Checkout/` and `src/routes/web.php`
+- [x] T085 [P] [US4] Blade C11 (saved-address reuse/edit, area, delivery date, slot, COD) and C12 (full summary, changed-terms state, confirm CTA) in `src/resources/views/checkout/` (RTL, states)
+- [x] T086 [US4] `CheckoutInput` Form Request + delivery-step validation (active area, selectable slot, not-past date) in `src/app/Http/Requests/Checkout/CheckoutDeliveryRequest.php`
 
 **Checkpoint**: Review step surfaces authoritative totals and blocks stale/invalid terms.
 
@@ -360,20 +360,20 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY)
 
-- [ ] T087 [P] [US4] Feature test transactional creation (order + items atomic), rollback on failure (no header without items) in `src/tests/Feature/Ordering/OrderCreationTest.php`
-- [ ] T088 [P] [US4] Feature test duplicate-submit idempotency (one-time submission token → single order) and `UNIQUE(order_number)` in `src/tests/Feature/Ordering/DuplicateSubmitTest.php`
-- [ ] T089 [P] [US9] Feature test immutable snapshots — change product/price/unit/offer after placement; historical order unchanged in `src/tests/Feature/Ordering/SnapshotImmutabilityTest.php`
+- [x] T087 [P] [US4] Feature test transactional creation (order + items atomic), rollback on failure (no header without items) in `src/tests/Feature/Ordering/OrderCreationTest.php`
+- [x] T088 [P] [US4] Feature test duplicate-submit idempotency (one-time submission token → single order) and `UNIQUE(order_number)` in `src/tests/Feature/Ordering/DuplicateSubmitTest.php`
+- [x] T089 [P] [US9] Feature test immutable snapshots — change product/price/unit/offer after placement; historical order unchanged in `src/tests/Feature/Ordering/SnapshotImmutabilityTest.php`
 
 ### Implementation
 
-- [ ] T090 [P] [US4] Migrations `orders` (snapshot columns incl. delivery date + slot label/times + money fields, `UNIQUE(order_number)`, indexes `(customer_id,created_at)`,`(status,created_at)`,`(delivery_date)`,`(created_at)`) and `order_items` (snapshot columns, nullable refs) in `src/database/migrations/` (data-model #14,#15)
-- [ ] T091 [P] [US4] Models `Order`, `OrderItem` (immutable-after-create posture; casts; relations) in `src/app/Models/`
-- [ ] T092 [US4] Order-number generator `ORD-######` from `AUTO_INCREMENT` id + offset inside the TX, `UNIQUE` backstop + retry in `src/app/Domain/Ordering/OrderNumber.php` (R9)
-- [ ] T093a [US4] `OrderService::place()` transaction skeleton — open DB transaction, re-run revalidation (T083a), guard changed-terms (return `PlaceResult.review_if_changed`, no placement), enforce one-time `submissionToken` idempotency in `src/app/Domain/Ordering/OrderService.php` (depends on T083b, T092)
-- [ ] T093b [US4] Persist immutable order header + `order_item` snapshots and allocate `order_number` within the transaction in `src/app/Domain/Ordering/OrderService.php` (depends on T093a, T090, T091)
-- [ ] T093c [US4] Clear cart items on success, roll back fully on failure, return `PlaceResult` (placed | error) — no partial order, no false success in `src/app/Domain/Ordering/OrderService.php` (depends on T093b, T066)
-- [ ] T094 [US4] Confirm route `POST /checkout/confirm` (one-time submission token, no false success offline/failure) in `src/app/Http/Controllers/Checkout/ConfirmController.php` and `src/routes/web.php` (FR-047)
-- [ ] T095 [P] [US4] Success screen C13 `GET /orders/success/{order}` (number/total/date/slot/address/status) in `src/app/Http/Controllers/Orders/` + `src/resources/views/orders/success.blade.php`
+- [x] T090 [P] [US4] Migrations `orders` (snapshot columns incl. delivery date + slot label/times + money fields, `UNIQUE(order_number)`, indexes `(customer_id,created_at)`,`(status,created_at)`,`(delivery_date)`,`(created_at)`) and `order_items` (snapshot columns, nullable refs) in `src/database/migrations/` (data-model #14,#15)
+- [x] T091 [P] [US4] Models `Order`, `OrderItem` (immutable-after-create posture; casts; relations) in `src/app/Models/`
+- [x] T092 [US4] Order-number generator `ORD-######` from `AUTO_INCREMENT` id + offset inside the TX, `UNIQUE` backstop + retry in `src/app/Domain/Ordering/OrderNumber.php` (R9)
+- [x] T093a [US4] `OrderService::place()` transaction skeleton — open DB transaction, re-run revalidation (T083a), guard changed-terms (return `PlaceResult.review_if_changed`, no placement), enforce one-time `submissionToken` idempotency in `src/app/Domain/Ordering/OrderService.php` (depends on T083b, T092)
+- [x] T093b [US4] Persist immutable order header + `order_item` snapshots and allocate `order_number` within the transaction in `src/app/Domain/Ordering/OrderService.php` (depends on T093a, T090, T091)
+- [x] T093c [US4] Clear cart items on success, roll back fully on failure, return `PlaceResult` (placed | error) — no partial order, no false success in `src/app/Domain/Ordering/OrderService.php` (depends on T093b, T066)
+- [x] T094 [US4] Confirm route `POST /checkout/confirm` (one-time submission token, no false success offline/failure) in `src/app/Http/Controllers/Checkout/ConfirmController.php` and `src/routes/web.php` (FR-047)
+- [x] T095 [P] [US4] Success screen C13 `GET /orders/success/{order}` (number/total/date/slot/address/status) in `src/app/Http/Controllers/Orders/` + `src/resources/views/orders/success.blade.php`
 
 **Checkpoint**: Customers can place an immutable COD order; snapshots proven stable.
 
@@ -387,17 +387,17 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 ### Tests (MANDATORY)
 
-- [ ] T096 [P] [US6] Unit test status transition validator — allowed forward path + all disallowed transitions rejected in `src/tests/Unit/Ordering/StatusTransitionTest.php`
-- [ ] T097 [P] [US6] Feature test cancellation matrix — customer cancels only `new`; admin cancels from new/confirmed/preparing/out_for_delivery; not from delivered/cancelled in `src/tests/Feature/Ordering/CancellationMatrixTest.php`
-- [ ] T098 [P] [US9] Feature test customer sees only own orders; history reflects placement-time snapshot in `src/tests/Feature/Ordering/CustomerHistoryTest.php`
+- [x] T096 [P] [US6] Unit test status transition validator — allowed forward path + all disallowed transitions rejected in `src/tests/Unit/Ordering/StatusTransitionTest.php`
+- [x] T097 [P] [US6] Feature test cancellation matrix — customer cancels only `new`; admin cancels from new/confirmed/preparing/out_for_delivery; not from delivered/cancelled in `src/tests/Feature/Ordering/CancellationMatrixTest.php`
+- [x] T098 [P] [US9] Feature test customer sees only own orders; history reflects placement-time snapshot in `src/tests/Feature/Ordering/CustomerHistoryTest.php`
 
 ### Implementation
 
-- [ ] T099 [US6] Status transition validator + `OrderService::transition(order, toStatus, actor, reason?)`, `canCustomerCancel`, `canAdminCancel` in `src/app/Domain/Ordering/OrderService.php` (R10/BR-012)
-- [ ] T100 [P] [US9] Customer order list C14 `GET /orders` (own only) + details C15 `GET /orders/{order}` + `POST /orders/{order}/cancel` in `src/app/Http/Controllers/Orders/` and `src/routes/web.php`
-- [ ] T101 [P] [US9] Blade C14/C15 (order card, status badge, immutable breakdown, cancel-if-`new`) in `src/resources/views/orders/` + `src/resources/views/components/order-card.blade.php`, `status-badge.blade.php`
-- [ ] T102 [US6] Filament `OrderResource` list with filters (status/date/area/search) in `src/app/Filament/Resources/OrderResource.php` (A03)
-- [ ] T103 [US6] Filament Order view/edit page — full detail + one-click status actions + cancel (calls `OrderService::transition`, no logic in resource) in `src/app/Filament/Resources/OrderResource/Pages/` (A04)
+- [x] T099 [US6] Status transition validator + `OrderService::transition(order, toStatus, actor, reason?)`, `canCustomerCancel`, `canAdminCancel` in `src/app/Domain/Ordering/OrderService.php` (R10/BR-012)
+- [x] T100 [P] [US9] Customer order list C14 `GET /orders` (own only) + details C15 `GET /orders/{order}` + `POST /orders/{order}/cancel` in `src/app/Http/Controllers/Orders/` and `src/routes/web.php`
+- [x] T101 [P] [US9] Blade C14/C15 (order card, status badge, immutable breakdown, cancel-if-`new`) in `src/resources/views/orders/` + `src/resources/views/components/order-card.blade.php`, `status-badge.blade.php`
+- [x] T102 [US6] Filament `OrderResource` list with filters (status/date/area/search) in `src/app/Filament/Resources/OrderResource.php` (A03)
+- [x] T103 [US6] Filament Order view/edit page — full detail + one-click status actions + cancel (calls `OrderService::transition`, no logic in resource) in `src/app/Filament/Resources/OrderResource/Pages/` (A04)
 
 **Checkpoint**: Full order lifecycle works for admin and customer; transitions tested.
 

@@ -30,6 +30,41 @@ final class InventoryService
     }
 
     /**
+     * Deduct an order's normalized sub-unit quantity from the product's balance (prompt 42 §9).
+     * Row-locked and non-negative via {@see applyToSubUnit}; throws when stock is insufficient.
+     */
+    public function deductForOrder(ProductUnit $subUnit, int $subUnits, int $orderId): InventoryAdjustment
+    {
+        return $this->applyToSubUnit(
+            $subUnit, InventoryAdjustmentType::Order, -abs($subUnits),
+            reason: null, performedBy: null,
+            inputUnitId: $subUnit->unit_id, inputQuantity: abs($subUnits),
+            referenceType: 'order', referenceId: $orderId,
+        );
+    }
+
+    /** Restore an order's deducted quantity on eligible cancellation (idempotent via {@see hasRestoreFor}). */
+    public function restoreForOrder(ProductUnit $subUnit, int $subUnits, int $orderId): InventoryAdjustment
+    {
+        return $this->applyToSubUnit(
+            $subUnit, InventoryAdjustmentType::OrderCancelRestore, abs($subUnits),
+            reason: null, performedBy: null,
+            inputUnitId: $subUnit->unit_id, inputQuantity: abs($subUnits),
+            referenceType: 'order', referenceId: $orderId,
+        );
+    }
+
+    /** True once a cancellation restore has already been written for this order (no double restore). */
+    public function hasRestoreFor(int $orderId): bool
+    {
+        return InventoryAdjustment::query()
+            ->where('reference_type', 'order')
+            ->where('reference_id', $orderId)
+            ->where('type', InventoryAdjustmentType::OrderCancelRestore->value)
+            ->exists();
+    }
+
+    /**
      * Apply a signed sub-unit delta to the product's SUB-level row under `lockForUpdate`,
      * refusing to go below zero, and append an adjustment row.
      *
