@@ -167,18 +167,18 @@ transactional order deduction / cancellation restore. Supersedes "inventory out 
 
 ### Integration (inside coupled phases)
 
-- [ ] T150 [US3] *(Phase F/cart)* Cart view flags a line whose requested qty exceeds unit stock; cart is **not** a reservation; excluded from valid checkout — in `CartService`/`CartView`
-- [ ] T151 [US4] *(Phase H/checkout)* Checkout revalidation adds an `insufficient_stock` blocker/change when stock < requested; forces re-review — in `CheckoutRevalidator`
-- [ ] T152 [US4] *(Phase I/placement)* `OrderService::place` calls `InventoryService::deductForOrder` inside the TX (lock rows, verify all lines, decrement, write `order` adjustments); shortfall aborts with no partial deduction — in `src/app/Domain/Ordering/OrderService.php`
-- [ ] T153 [US6] *(Phase J/lifecycle)* Eligible-cancellation restore via `InventoryService::restoreForCancellation` (idempotent `order_cancel_restore`; never for delivered/cancelled) wired into `OrderService::transition`
+- [x] T150 [US3] *(Phase F/cart)* Cart view flags a line whose requested qty exceeds unit stock; cart is **not** a reservation; excluded from valid checkout — in `CartService`/`CartView`
+- [x] T151 [US4] *(Phase H/checkout)* Checkout revalidation adds an `insufficient_stock` blocker/change when stock < requested; forces re-review — in `CheckoutRevalidator`
+- [x] T152 [US4] *(Phase I/placement)* `OrderService::place` calls `InventoryService::deductForOrder` inside the TX (lock rows, verify all lines, decrement, write `order` adjustments); shortfall aborts with no partial deduction — in `src/app/Domain/Ordering/OrderService.php`
+- [x] T153 [US6] *(Phase J/lifecycle)* Eligible-cancellation restore via `InventoryService::restoreForCancellation` (idempotent `order_cancel_restore`; never for delivered/cancelled) wired into `OrderService::transition`
 - [ ] T154 [US6] *(Phase K/dashboard)* Optional out-of-stock units count widget/indicator (only if consistent with dashboard design)
 
 ### Mandatory inventory tests (with coupled phases / Phase N)
 
-- [ ] T155 [P] [US4] Feature: stock zero ⇒ unit unavailable (add-to-cart + checkout reject) in `src/tests/Feature/Inventory/AvailabilityTest.php`
-- [ ] T156 [P] [US4] Feature: order deducts stock; multi-line deducts atomically; failed order rolls back deduction in `src/tests/Feature/Inventory/OrderDeductionTest.php`
+- [x] T155 [P] [US4] Feature: stock zero ⇒ unit unavailable (add-to-cart + checkout reject) in `src/tests/Feature/Inventory/AvailabilityTest.php`
+- [x] T156 [P] [US4] Feature: order deducts stock; multi-line deducts atomically; failed order rolls back deduction in `src/tests/Feature/Inventory/OrderDeductionTest.php`
 - [ ] T157 [P] [US4] Feature/integration: concurrent orders cannot oversell (row-lock) in `src/tests/Feature/Inventory/ConcurrencyTest.php`
-- [ ] T158 [P] [US6] Feature: cancellation restores stock once (idempotent); delivered order cannot restore in `src/tests/Feature/Inventory/CancellationRestoreTest.php`
+- [x] T158 [P] [US6] Feature: cancellation restores stock once (idempotent); delivered order cannot restore in `src/tests/Feature/Inventory/CancellationRestoreTest.php`
 
 **Checkpoint**: stock is per-unit, admin-manageable with audit history, stock-driven availability holds,
 orders never oversell, and cancellations restore exactly once.
@@ -202,12 +202,12 @@ independent-stock selling-unit model (R25, FR-079..FR-086). Controlled refactor 
 - [x] T161 [US5] `ProductUnitConverter` (primary→sub, sub→sub, format sub balance as primary+remainder) in `src/app/Domain/Inventory/ProductUnitConverter.php`; move authoritative `stock_quantity` to the **sub-level** row (data-migrate existing balances)
 - [x] T162 [US5] Update `InventoryService`/`AdjustInventoryAction`: accept input in primary or sub unit, normalize to sub-units, record `input_unit_id`/`input_quantity` + normalized delta; never < 0
 - [x] T163 [US5] Product admin Units tab: pick primary + sub unit + conversion factor (Arabic labels), independent price per sellable unit; **block factor change while stock ≠ 0** (§24)
-- [ ] T164 [US2] Customer: both units sellable; availability from product sub-unit stock; reject requested qty > available (Arabic message, no silent reduction)
-- [ ] T165 [US4] *(Phase I coupling)* Order deduction normalizes lines to sub-units atomically; snapshots capture unit code/level + conversion factor used + normalized sub-unit qty
+- [x] T164 [US2] Customer: both units sellable; availability from product sub-unit stock; reject requested qty > available (Arabic message, no silent reduction)
+- [x] T165 [US4] *(Phase I coupling)* Order deduction normalizes lines to sub-units atomically; snapshots capture unit code/level + conversion factor used + normalized sub-unit qty
 - [x] T166 [P] [US5] Tests — units: create, activate/deactivate, one primary + one sub per product, primary≠sub, factor required & > 0
 - [x] T167 [P] [US5] Tests — conversion: 1→12, 10→120, 7 sub→7, 2 carton+5 piece→29, 125 sub→"10 carton + 5 piece"
 - [ ] T168 [P] [US4] Tests — inventory two-level: add primary (+120), add sub (+7), remove, correct, no-negative, order deducts normalized, cancel restores normalized once, concurrent no-oversell
-- [ ] T169 [P] [US3] Tests — pricing independence: carton/piece independent prices; changing one doesn't change the other; tiers/offers per selected unit; lower-of holds
+- [x] T169 [P] [US3] Tests — pricing independence: carton/piece independent prices; changing one doesn't change the other; tiers/offers per selected unit; lower-of holds
 
 **Checkpoint**: reusable units; each product has a primary/sub pair + conversion; one authoritative
 sub-unit balance; independent pricing; orders deduct normalized sub-units; history stable across
@@ -492,7 +492,7 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 - [x] T131 [P] Seeders — admin user, categories, products, units, price tiers, offers in `src/database/seeders/`
 - [x] T132 [P] Seeders — delivery areas, weekday slots, a delivery discount rule, settings (minimum order + business info) in `src/database/seeders/`
-- [ ] T133 [P] Seeder — sample orders across statuses for demo/dashboard in `src/database/seeders/`
+- [x] T133 [P] Seeder — sample orders across statuses for demo/dashboard in `src/database/seeders/`
 - [x] T134 Demo OTP safety — `LogOtpProvider` surfaces the code via a non-prod dev channel/banner only; guard prevents any static/test OTP behavior when `APP_ENV=production` (bind check in provider)
 - [ ] T135 [P] Staging environment instructions (env, seed, HTTPS) appended to `quickstart.md` (docs, outside `src/`)
 - [ ] T136 PWA installability manual test checklist on a supported mobile browser (docs)

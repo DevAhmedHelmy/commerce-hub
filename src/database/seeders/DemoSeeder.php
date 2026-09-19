@@ -38,6 +38,60 @@ class DemoSeeder extends Seeder
         $this->delivery();
         $this->catalog($units);
         $this->adminUser();
+        $this->sampleOrders();
+    }
+
+    /** A demo customer with a few orders across statuses, for dashboard/order-screen review. */
+    private function sampleOrders(): void
+    {
+        if (\App\Models\Order::query()->exists()) {
+            return; // idempotent — only seed once
+        }
+
+        $customer = \App\Models\Customer::firstOrCreate(
+            ['phone' => '01055550000'],
+            ['business_name' => 'مطعم العرض', 'contact_person_name' => 'أحمد', 'whatsapp_phone' => '01055550000', 'onboarding_completed_at' => Carbon::now()],
+        );
+        $area = DeliveryArea::query()->where('is_active', true)->first();
+        $slot = DeliverySlot::query()->where('is_active', true)->first();
+        $product = Product::query()->whereHas('units', fn ($q) => $q->where('level', ProductUnit::LEVEL_SUB)->where('stock_quantity', '>', 10))->first();
+
+        if ($area === null || $slot === null || $product === null) {
+            return;
+        }
+
+        $address = $customer->addresses()->firstOrCreate(
+            ['is_default' => true],
+            ['delivery_area_id' => $area->id, 'address_line' => 'شارع التحرير، المبنى ٣'],
+        );
+
+        $cart = app(\App\Domain\Cart\CartService::class);
+        $orders = app(\App\Domain\Ordering\OrderService::class);
+        $date = Carbon::now()->addDay();
+        // Align the slot weekday with the delivery date so it is selectable.
+        $slot->update(['day_of_week' => $date->isoWeekday()]);
+
+        $statuses = [\App\Domain\Support\Enums\OrderStatus::New, \App\Domain\Support\Enums\OrderStatus::Confirmed, \App\Domain\Support\Enums\OrderStatus::Delivered];
+        foreach ($statuses as $target) {
+            // Carton (primary) qty keeps each order above the demo minimum-order amount.
+            $cart->add($customer, $product->primaryUnit()->first(), 2);
+            $input = new \App\Domain\Ordering\DTO\CheckoutInput(
+                addressId: $address->id, deliveryDate: $date->toDateString(),
+                slotId: $slot->id, submissionToken: (string) \Illuminate\Support\Str::uuid(),
+            );
+            $result = $orders->place($customer, $input);
+            if (! $result->isPlaced()) {
+                continue;
+            }
+            // Advance to the target status through the forward path.
+            $order = $result->order;
+            while ($order->status !== $target && $order->status->forwardTransitions() !== []) {
+                $order = $orders->transition($order, $order->status->forwardTransitions()[0], 'admin');
+                if ($order->status === $target) {
+                    break;
+                }
+            }
+        }
     }
 
     /** @return array<string, Unit> */
