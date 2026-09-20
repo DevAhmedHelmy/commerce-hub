@@ -617,3 +617,29 @@ Task: "Create PriceResult DTO in src/app/Domain/Pricing/PriceResult.php"
 - Filament resources/actions call domain services — **no** pricing/order/delivery logic inside Filament.
 - Scope guard: no payment/credit/inventory/warehouses/branches/drivers/loyalty/coupons/recurring/Buy-Again/customer-specific pricing/English UI/language switcher/advanced RBAC/microservices.
 - Commit after each task or logical group; stop at any checkpoint to validate a story independently.
+
+---
+
+## UAT Batch 1 (prompt 48) — superseding decisions
+
+Delivered on branch `feature/uat-ui-branding-admin-improvements` (do not auto-merge):
+
+- **Root `/` opens the public Landing** (never auto-redirects); system-controlled CTA `/start`
+  routes guest→login, onboarded→home, incomplete→onboarding.
+- **Theme is now manual Light / Dark / System** (localStorage, `html[data-theme]`, no DB) —
+  supersedes the earlier system-only rule.
+- **Backend-controlled white-label branding**: company name + light/dark logo + favicon on landing
+  settings; used on landing/login/home + admin panel (`brandName`/`brandLogo`); Filament promo widget
+  removed; `<x-brand-logo>` falls back to the company name (never a broken image).
+- **Customer profile/address editing is ADMIN-ONLY** — supersedes customer self-edit; the customer
+  Account is read-only.
+- **Customer activation**: `customers.is_active`; deactivated customers cannot log in / are logged out
+  mid-session; admin activate/deactivate (audited); never deleted.
+- **Admin Products**: authoritative sub-unit stock column + quick Add-Stock (primary/sub, via
+  InventoryService) + quick Edit-Price (via domain); **new prices apply to future orders only —
+  placed-order snapshots stay immutable** (regression-tested).
+- **RBAC**: added `customers.update`, `customers.activate`, `landing.view`, `landing.manage`.
+- **Product demo images**: generic branded placeholders seeded (idempotent, GD).
+- **Admin Arabic**: nav/model labels for products/categories/units + Arabic Filament locale.
+- Remaining for a browser + freed-disk pass: cross-viewport visual QA (§33–§35) and deeper aesthetic
+  polish; dev-DB `migrate` + `db:seed` + `storage:link` to refresh review data.
