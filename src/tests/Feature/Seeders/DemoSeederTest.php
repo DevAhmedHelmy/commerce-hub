@@ -7,8 +7,19 @@ use App\Models\DeliveryArea;
 use App\Models\Product;
 use App\Models\Unit;
 use Database\Seeders\DemoSeeder;
+use Illuminate\Support\Facades\Storage;
+
+it('gives seeded products a placeholder image', function () {
+    Storage::fake('public');
+    (new DemoSeeder())->run();
+
+    $product = Product::query()->whereNotNull('image_path')->first();
+    expect($product)->not->toBeNull();
+    Storage::disk('public')->assertExists($product->image_path);
+});
 
 it('seeds demo data and is safe to re-run (idempotent)', function () {
+    Storage::fake('public');
     (new DemoSeeder())->run();
 
     $products = Product::query()->count();

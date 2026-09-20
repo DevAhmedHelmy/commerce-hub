@@ -185,6 +185,41 @@ class DemoSeeder extends Seeder
         );
     }
 
+    /**
+     * Generate a polished generic product placeholder (brand-toned, per-product hue) and store it
+     * on the public disk (prompt 48 §9.6 — no internet, no copyrighted packshots). Returns the path.
+     */
+    private function placeholderImage(string $seed): ?string
+    {
+        if (! extension_loaded('gd')) {
+            return null;
+        }
+
+        $size = 600;
+        $im = imagecreatetruecolor($size, $size);
+        $palette = [[3, 72, 142], [2, 100, 177], [13, 122, 42], [9, 143, 220], [2, 44, 104]];
+        $c = $palette[crc32($seed) % count($palette)];
+        imagefilledrectangle($im, 0, 0, $size, $size, imagecolorallocate($im, $c[0], $c[1], $c[2]));
+
+        $lighter = imagecolorallocate($im, min(255, $c[0] + 45), min(255, $c[1] + 45), min(255, $c[2] + 45));
+        imagefilledellipse($im, (int) ($size / 2), (int) ($size * 0.42), (int) ($size * 0.6), (int) ($size * 0.6), $lighter);
+
+        $white = imagecolorallocate($im, 255, 255, 255);
+        $pad = (int) ($size * 0.32);
+        imagefilledrectangle($im, $pad, (int) ($size * 0.30), $size - $pad, (int) ($size * 0.44), $white);
+        imagefilledrectangle($im, $pad, (int) ($size * 0.50), $size - $pad, (int) ($size * 0.70), $white);
+
+        ob_start();
+        imagepng($im);
+        $binary = (string) ob_get_clean();
+        imagedestroy($im);
+
+        $path = 'products/'.\Illuminate\Support\Str::ulid().'.png';
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $binary);
+
+        return $path;
+    }
+
     /** @param array<string, Unit> $units */
     private function catalog(array $units): void
     {
@@ -211,6 +246,12 @@ class DemoSeeder extends Seeder
                     ['name_ar' => $name],
                     ['category_id' => $category->id, 'brand' => $brand, 'availability' => AvailabilityStatus::Available->value],
                 );
+
+                // Generate a clean branded placeholder image when none exists (never overwrite an
+                // admin-uploaded image; skip if GD is unavailable → Blade letter fallback).
+                if (! $product->image_path && ($path = $this->placeholderImage($name)) !== null) {
+                    $product->update(['image_path' => $path]);
+                }
 
                 if ($product->units()->exists()) {
                     continue; // already seeded — keep idempotent
