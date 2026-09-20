@@ -14,6 +14,7 @@ return [
     'quantity' => 'الكمية',
     'add_to_cart' => 'أضف إلى السلة',
     'offer' => 'عرض',
+    'offers' => 'عروض مميزة',
     'view_product' => 'عرض المنتج',
     'description' => 'الوصف',
     'no_categories' => 'لا توجد تصنيفات بعد',

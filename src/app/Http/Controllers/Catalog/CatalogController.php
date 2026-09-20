@@ -25,6 +25,8 @@ class CatalogController extends Controller
     {
         return view('catalog.home', [
             'categories' => $this->catalog->activeCategories(),
+            // Featured = active-offer products (same MVP rule as the landing), read live.
+            'featured' => app(\App\Domain\Landing\LandingPageService::class)->featuredProducts(8),
         ]);
     }
 

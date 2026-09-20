@@ -1,5 +1,6 @@
 <x-layouts.public :title="__('auth.screens.login_title')">
     <div class="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-10">
+        <div class="mb-6 flex justify-center"><x-brand-logo class="h-12" /></div>
         <h1 class="text-2xl font-bold text-content">{{ __('auth.screens.login_title') }}</h1>
         <p class="mt-2 text-sm text-muted">{{ __('auth.screens.login_subtitle') }}</p>
 
