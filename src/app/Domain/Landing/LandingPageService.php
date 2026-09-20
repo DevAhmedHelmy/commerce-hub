@@ -30,6 +30,31 @@ final class LandingPageService
         return Cache::rememberForever(self::CACHE_SETTINGS, static fn () => LandingPageSetting::singleton());
     }
 
+    /** Client/company display name with safe fallbacks (prompt 48 §7/§8). */
+    public function companyName(): string
+    {
+        $s = $this->settings();
+
+        return $s->localized('company_name') ?: ($s->localized('site_title') ?: 'إمداد');
+    }
+
+    /** Logo URL for the given theme (light|dark) or null when none is configured. */
+    public function logoUrl(string $theme = 'light'): ?string
+    {
+        $path = $theme === 'dark'
+            ? ($this->settings()->logo_dark_path ?: $this->settings()->logo_light_path)
+            : ($this->settings()->logo_light_path ?: $this->settings()->logo_dark_path);
+
+        return $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null;
+    }
+
+    public function faviconUrl(): ?string
+    {
+        $path = $this->settings()->favicon_path;
+
+        return $path ? \Illuminate\Support\Facades\Storage::disk('public')->url($path) : null;
+    }
+
     /** Active sections in configured order (with their marketing items). @return Collection<int,LandingSection> */
     public function sections(): Collection
     {

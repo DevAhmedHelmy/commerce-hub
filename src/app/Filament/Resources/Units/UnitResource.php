@@ -20,6 +20,12 @@ class UnitResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $navigationLabel = 'الوحدات';
+
+    protected static ?string $modelLabel = 'وحدة';
+
+    protected static ?string $pluralModelLabel = 'الوحدات';
+
     public static function form(Schema $schema): Schema
     {
         return UnitForm::configure($schema);

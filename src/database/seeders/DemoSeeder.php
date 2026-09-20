@@ -47,6 +47,7 @@ class DemoSeeder extends Seeder
     {
         \App\Models\LandingPageSetting::firstOrCreate(['id' => 1], [
             'site_title_ar' => 'إمداد',
+            'company_name_ar' => 'إمداد لمستلزمات المطاعم',
             'hero_title_ar' => 'مستلزمات مطعمك تصلك بسهولة',
             'hero_subtitle_ar' => 'اطلب بالجملة بأسعار مناسبة وتوصيل سريع — الدفع عند الاستلام.',
             'primary_cta_label_ar' => 'ابدأ الطلب',

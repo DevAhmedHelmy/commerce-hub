@@ -10,8 +10,8 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use App\Domain\Landing\LandingPageService;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -29,18 +29,23 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->colors([
-                // Emdad Food brand blue (restaurant-ui §24 — admin shares the brand identity).
+                // Client brand blue (restaurant-ui §24 — admin shares the brand identity).
                 'primary' => Color::Blue,
             ])
+            // White-label client branding (prompt 48 §11); evaluated lazily at render.
+            ->brandName(fn (): string => app(LandingPageService::class)->companyName())
+            ->brandLogo(fn (): ?string => app(LandingPageService::class)->logoUrl('light'))
+            ->brandLogoHeight('2rem')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            // Operational widgets only — the Filament promo/info widget is removed (prompt 48 §12).
+            // OrdersOverview + InventoryOverview are auto-discovered from Filament/Widgets.
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

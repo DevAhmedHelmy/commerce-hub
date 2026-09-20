@@ -49,6 +49,13 @@ class ManageLandingPage extends Page implements HasForms
     {
         return $schema
             ->components([
+                Section::make('الهوية والعلامة التجارية')->columns(2)->schema([
+                    TextInput::make('company_name_ar')->label('اسم الشركة')->maxLength(255),
+                    TextInput::make('site_title_ar')->label('عنوان الموقع')->maxLength(255),
+                    FileUpload::make('logo_light_path')->label('الشعار (فاتح)')->image()->disk('public')->directory('branding')->maxSize(2048),
+                    FileUpload::make('logo_dark_path')->label('الشعار (داكن)')->image()->disk('public')->directory('branding')->maxSize(2048),
+                    FileUpload::make('favicon_path')->label('أيقونة الموقع (Favicon)')->image()->disk('public')->directory('branding')->maxSize(512),
+                ]),
                 Section::make('القسم الرئيسي (Hero)')->columns(2)->schema([
                     TextInput::make('hero_title_ar')->label('العنوان')->maxLength(255),
                     TextInput::make('primary_cta_label_ar')->label('نص زر الطلب')->maxLength(255),

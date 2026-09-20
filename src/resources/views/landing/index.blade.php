@@ -15,7 +15,7 @@
 
         {{-- Header --}}
         <header class="flex items-center justify-between py-5">
-            <span class="text-xl font-extrabold text-content">{{ $siteTitle }}</span>
+            <x-brand-logo class="h-9" />
             <a href="{{ route('login') }}" class="rounded-[--radius-sm] border border-border px-4 py-2 text-sm font-semibold text-content">{{ __('landing.sign_in') }}</a>
         </header>
 
