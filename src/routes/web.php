@@ -35,7 +35,7 @@ Route::middleware('guest:customer')->group(function () {
         ->middleware('throttle:10,1')->name('otp.resend');
 });
 
-Route::middleware('auth:customer')->group(function () {
+Route::middleware(['auth:customer', 'customer.active'])->group(function () {
     Route::post('/logout', [OtpController::class, 'logout'])->name('logout');
 
     // Onboarding (authenticated but not yet gated by completion).
@@ -70,12 +70,8 @@ Route::middleware('auth:customer')->group(function () {
         Route::get('/orders/{order}', [OrdersController::class, 'show'])->name('orders.show');
         Route::post('/orders/{order}/cancel', [OrdersController::class, 'cancel'])->name('orders.cancel');
 
-        // Account (US1 / prompt 44) — persistent profile + default address (edited here, not checkout).
+        // Account (read-only). Profile/address editing is ADMIN-ONLY (prompt 48 §21).
         Route::get('/account', [ProfileController::class, 'show'])->name('account.index');
-        Route::get('/account/profile', [ProfileController::class, 'editProfile'])->name('account.profile');
-        Route::post('/account/profile', [ProfileController::class, 'updateProfile'])->name('account.profile.update');
-        Route::get('/account/address', [ProfileController::class, 'editAddress'])->name('account.address');
-        Route::post('/account/address', [ProfileController::class, 'updateAddress'])->name('account.address.update');
     });
 });
 

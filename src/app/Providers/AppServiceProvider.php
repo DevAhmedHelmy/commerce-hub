@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Domain\Auth\Contracts\OtpProvider;
 use App\Domain\Auth\Providers\LogOtpProvider;
+use App\Models\Customer;
 use App\Models\DeliveryArea;
 use App\Models\DeliveryDiscountRule;
 use App\Models\DeliverySlot;
@@ -19,6 +20,7 @@ use App\Models\Unit;
 use App\Models\User;
 use App\Observers\DeliveryAreaObserver;
 use App\Observers\DeliveryDiscountRuleObserver;
+use App\Observers\CustomerObserver;
 use App\Observers\DeliverySlotObserver;
 use App\Observers\LandingObserver;
 use App\Observers\ProductObserver;
@@ -70,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         DeliveryArea::observe(DeliveryAreaObserver::class);
         DeliverySlot::observe(DeliverySlotObserver::class);
         DeliveryDiscountRule::observe(DeliveryDiscountRuleObserver::class);
+        Customer::observe(CustomerObserver::class);
         LandingPageSetting::observe(LandingObserver::class);
         LandingSection::observe(LandingObserver::class);
         LandingSectionItem::observe(LandingObserver::class);

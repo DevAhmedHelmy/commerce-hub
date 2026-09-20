@@ -10,7 +10,6 @@
     <section class="rounded-[--radius-md] border border-border p-4">
         <div class="mb-2 flex items-center justify-between">
             <h2 class="font-bold text-content">{{ __('account.business_info') }}</h2>
-            <a href="{{ route('account.profile') }}" class="text-sm text-primary">{{ __('account.edit_profile') }}</a>
         </div>
         <dl class="space-y-1 text-sm">
             <div class="flex justify-between"><dt class="text-muted">{{ __('account.business_name') }}</dt><dd class="text-content" dir="auto">{{ $customer->business_name }}</dd></div>
@@ -23,7 +22,6 @@
     <section class="mt-4 rounded-[--radius-md] border border-border p-4">
         <div class="mb-2 flex items-center justify-between">
             <h2 class="font-bold text-content">{{ __('account.delivery_address') }}</h2>
-            <a href="{{ route('account.address') }}" class="text-sm text-primary">{{ __('account.edit_address') }}</a>
         </div>
         @if ($address)
             <dl class="space-y-1 text-sm">
@@ -35,7 +33,9 @@
         @endif
     </section>
 
-    <form method="POST" action="{{ route('logout') }}" class="mt-4">
+    <p class="mt-4 text-center text-xs text-muted">{{ __('account.admin_edit_note') }}</p>
+
+    <form method="POST" action="{{ route('logout') }}" class="mt-3">
         @csrf
         <button type="submit" class="w-full rounded-[--radius-sm] border border-border px-4 py-3 text-sm font-semibold text-content">{{ __('account.logout') }}</button>
     </form>

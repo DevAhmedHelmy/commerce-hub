@@ -73,6 +73,13 @@ class OtpController extends Controller
             return back()->withErrors(['code' => __($result->reason->messageKey())]);
         }
 
+        // Deactivated customers cannot sign in until an admin reactivates them (prompt 48 §22).
+        if (! $result->customer->isActive()) {
+            $request->session()->forget('otp_phone');
+
+            return redirect()->route('login')->withErrors(['phone' => __('auth.account_disabled')]);
+        }
+
         Auth::guard('customer')->login($result->customer);
         $request->session()->regenerate();
         $request->session()->forget('otp_phone');

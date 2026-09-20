@@ -26,7 +26,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'pricing.view', 'pricing.update_base', 'pricing.manage_tiers', 'pricing.manage_offers',
         'inventory.view', 'inventory.adjust', 'inventory.view_history',
         'orders.view', 'orders.update_status', 'orders.cancel',
-        'customers.view',
+        'customers.view', 'customers.update', 'customers.activate',
         'delivery.view', 'delivery.manage_areas', 'delivery.manage_slots', 'delivery.manage_discounts',
         'settings.view', 'settings.update',
         'landing.view', 'landing.manage',

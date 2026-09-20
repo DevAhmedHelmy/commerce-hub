@@ -19,8 +19,14 @@ class Customer extends Authenticatable
     use HasFactory;
     use SoftDeletes;
 
+    /** New customers are active by default (in-memory default so freshly-created models are active). */
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
     protected $fillable = [
         'phone',
+        'is_active',
         'business_name',
         'contact_person_name',
         'whatsapp_phone',
@@ -31,9 +37,15 @@ class Customer extends Authenticatable
     protected function casts(): array
     {
         return [
+            'is_active' => 'boolean',
             'onboarding_completed_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return (bool) $this->is_active;
     }
 
     public function addresses(): HasMany
