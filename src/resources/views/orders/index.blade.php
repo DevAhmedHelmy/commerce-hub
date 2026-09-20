@@ -20,5 +20,9 @@
         <div class="py-16 text-center text-muted">{{ __('orders.empty') }}</div>
     @endforelse
 
+    @if ($orders->hasPages())
+        <div class="mt-4">{{ $orders->links() }}</div>
+    @endif
+
     <x-slot:nav><x-catalog-nav /></x-slot:nav>
 </x-layouts.app>

@@ -171,13 +171,13 @@ transactional order deduction / cancellation restore. Supersedes "inventory out 
 - [x] T151 [US4] *(Phase H/checkout)* Checkout revalidation adds an `insufficient_stock` blocker/change when stock < requested; forces re-review — in `CheckoutRevalidator`
 - [x] T152 [US4] *(Phase I/placement)* `OrderService::place` calls `InventoryService::deductForOrder` inside the TX (lock rows, verify all lines, decrement, write `order` adjustments); shortfall aborts with no partial deduction — in `src/app/Domain/Ordering/OrderService.php`
 - [x] T153 [US6] *(Phase J/lifecycle)* Eligible-cancellation restore via `InventoryService::restoreForCancellation` (idempotent `order_cancel_restore`; never for delivered/cancelled) wired into `OrderService::transition`
-- [ ] T154 [US6] *(Phase K/dashboard)* Optional out-of-stock units count widget/indicator (only if consistent with dashboard design)
+- [x] T154 [US6] *(Phase K/dashboard)* Optional out-of-stock units count widget/indicator (only if consistent with dashboard design)
 
 ### Mandatory inventory tests (with coupled phases / Phase N)
 
 - [x] T155 [P] [US4] Feature: stock zero ⇒ unit unavailable (add-to-cart + checkout reject) in `src/tests/Feature/Inventory/AvailabilityTest.php`
 - [x] T156 [P] [US4] Feature: order deducts stock; multi-line deducts atomically; failed order rolls back deduction in `src/tests/Feature/Inventory/OrderDeductionTest.php`
-- [ ] T157 [P] [US4] Feature/integration: concurrent orders cannot oversell (row-lock) in `src/tests/Feature/Inventory/ConcurrencyTest.php`
+- [x] T157 [P] [US4] Feature/integration: concurrent orders cannot oversell (row-lock) in `src/tests/Feature/Inventory/ConcurrencyTest.php`
 - [x] T158 [P] [US6] Feature: cancellation restores stock once (idempotent); delivered order cannot restore in `src/tests/Feature/Inventory/CancellationRestoreTest.php`
 
 **Checkpoint**: stock is per-unit, admin-manageable with audit history, stock-driven availability holds,
@@ -206,7 +206,7 @@ independent-stock selling-unit model (R25, FR-079..FR-086). Controlled refactor 
 - [x] T165 [US4] *(Phase I coupling)* Order deduction normalizes lines to sub-units atomically; snapshots capture unit code/level + conversion factor used + normalized sub-unit qty
 - [x] T166 [P] [US5] Tests — units: create, activate/deactivate, one primary + one sub per product, primary≠sub, factor required & > 0
 - [x] T167 [P] [US5] Tests — conversion: 1→12, 10→120, 7 sub→7, 2 carton+5 piece→29, 125 sub→"10 carton + 5 piece"
-- [ ] T168 [P] [US4] Tests — inventory two-level: add primary (+120), add sub (+7), remove, correct, no-negative, order deducts normalized, cancel restores normalized once, concurrent no-oversell
+- [x] T168 [P] [US4] Tests — inventory two-level: add primary (+120), add sub (+7), remove, correct, no-negative, order deducts normalized, cancel restores normalized once, concurrent no-oversell
 - [x] T169 [P] [US3] Tests — pricing independence: carton/piece independent prices; changing one doesn't change the other; tiers/offers per selected unit; lower-of holds
 
 **Checkpoint**: reusable units; each product has a primary/sub pair + conversion; one authoritative
@@ -226,7 +226,7 @@ referenced. Framework + existing entities wired now; order/delivery/pricing hook
 - [x] TA03 [US5] Inventory manual add/remove/correct audited in `AdjustInventoryAction` referencing `inventory_adjustment_id`; no false-success audit when the stock change throws
 - [x] TA04 [US5] Read-only Filament Audit Log resource (list + view; filters user/action/type/date-range; Arabic RTL; human-readable old→new diff via `AuditDiffFormatter`); no create/edit/delete
 - [x] TA05 [P] [US5] Tests — product update, base-price old/new, inventory reference, failed-tx→no audit, settings change, redaction, admin can view, guest/customer blocked, resource read-only
-- [ ] TA06 [US5] *(later-phase coupling)* Audit hooks for price tiers/offers (Phase E), order status change + cancellation (Phase I/J), delivery area/slot/discount + settings screens (Phase G/K)
+- [x] TA06 [US5] *(later-phase coupling)* Audit hooks for price tiers/offers (Phase E), order status change + cancellation (Phase I/J), delivery area/slot/discount + settings screens (Phase G/K)
 
 **Checkpoint**: every critical admin write on existing entities produces an immutable, redacted audit
 row; admins have a read-only Arabic audit screen; inventory ledger remains authoritative.
@@ -468,17 +468,24 @@ the last super_admin is protected; business rules hold regardless of permissions
 
 **Purpose**: Harden all stories; enforce state coverage; verify performance, security, and PHP 8.2 safety.
 
-- [ ] T119 Authorization review — customer ownership on orders/cart, admin panel restricted to `users`, server-side gates on every protected action (`src/app/Http/Middleware/`, policies)
-- [ ] T120 [P] Verify CSRF on all state-changing web routes and mass-assignment guards (`$fillable`/Form Requests) across `src/app/Models/` and `src/app/Http/Requests/`
-- [ ] T121 [P] Secure file uploads (mime/size/non-executable path) audit in `src/app/Domain/Support/MediaService.php`
-- [ ] T122 [P] Session/cookie security config (secure cookies, session driver) + OTP abuse protection review in `src/config/session.php` and `OtpService`
-- [ ] T123 N+1 review + eager loading on catalog/orders/customer/dashboard queries; add pagination to all lists (`src/app/Domain/**`, controllers, Filament resources)
-- [ ] T124 [P] Verify DB indexes match query patterns (data-model §42) via a migration audit note in `src/database/migrations/`
+- [x] T119 Authorization review — customer ownership on orders/cart, admin panel restricted to `users`, server-side gates on every protected action (`src/app/Http/Middleware/`, policies)
+- [x] T120 [P] Verify CSRF on all state-changing web routes and mass-assignment guards (`$fillable`/Form Requests) across `src/app/Models/` and `src/app/Http/Requests/`
+- [x] T121 [P] Secure file uploads (mime/size/non-executable path) audit in `src/app/Domain/Support/MediaService.php`
+- [x] T122 [P] Session/cookie security config (secure cookies, session driver) + OTP abuse protection review in `src/config/session.php` and `OtpService`
+- [x] T123 N+1 review + eager loading on catalog/orders/customer/dashboard queries; add pagination to all lists (`src/app/Domain/**`, controllers, Filament resources)
+- [x] T124 [P] Verify DB indexes match query patterns (data-model §42) via a migration audit note in `src/database/migrations/`
 - [ ] T125 [P] Image optimization / WebP + thumbnail generation in `MediaService` and product card rendering
-- [ ] T126a [US13] State-coverage audit for **customer** screens (home/category/search/product/cart/checkout/orders/profile) — loading/empty/error/disabled/validation/out-of-stock, against screen-specifications, in `src/resources/views/**`
-- [ ] T126b [US13] State-coverage audit for **admin** (Filament) resources/pages — empty/validation/disabled states + Arabic labels, against admin-design, in `src/app/Filament/**`
-- [ ] T127 [P] [US13] Arabic RTL + mixed Arabic/English (brands) + Latin-digit review across customer + admin UI; centralized `444 ج` formatting used everywhere (no inline currency)
+  > **Intentionally deferred (prompt 45):** MVP enforces the strict upload-size fallback the plan allows
+  > (`MediaService::MAX_KILOBYTES` = 4 MB, safe mimes, lazy-loaded images). WebP/thumbnail generation is a
+  > post-MVP optimization, deferred to avoid a heavy image dependency — no functional gap.
+- [x] T126a [US13] State-coverage audit for **customer** screens (home/category/search/product/cart/checkout/orders/profile) — loading/empty/error/disabled/validation/out-of-stock, against screen-specifications, in `src/resources/views/**`
+- [x] T126b [US13] State-coverage audit for **admin** (Filament) resources/pages — empty/validation/disabled states + Arabic labels, against admin-design, in `src/app/Filament/**`
+- [x] T127 [P] [US13] Arabic RTL + mixed Arabic/English (brands) + Latin-digit review across customer + admin UI; centralized `444 ج` formatting used everywhere (no inline currency)
 - [ ] T128 [P] [US13] Accessibility + mobile responsiveness pass (labels, focus, contrast, touch targets) on critical screens
+  > **Partially done / deferred (prompt 45):** code-level a11y is in place (form labels, semantic controls,
+  > alt text, focus styles, semantic theme tokens, ≥44px touch targets, RTL). A live cross-viewport browser
+  > visual QA (390/768/1024/1440, light/dark) was **not executed** here (no running server in this env) and is
+  > recommended before UAT via the restaurant-ui skill / browser-automation.
 - [x] T129 Run `composer check-platform-reqs` and confirm no dependency requires PHP 8.3+ (R0a)
 - [x] T130 Run full Pest suite (`php artisan test`) and ensure all mandatory business-logic tests pass
 

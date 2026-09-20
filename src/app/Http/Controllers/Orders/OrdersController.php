@@ -26,7 +26,7 @@ class OrdersController extends Controller
         $orders = Order::query()
             ->forCustomer($request->user('customer')->id)
             ->latest()
-            ->get();
+            ->paginate(15);
 
         return view('orders.index', ['orders' => $orders]);
     }
