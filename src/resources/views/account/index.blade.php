@@ -33,6 +33,13 @@
         @endif
     </section>
 
+    <section class="mt-4 rounded-[--radius-md] border border-border p-4">
+        <div class="flex items-center justify-between gap-3">
+            <h2 class="font-bold text-content">{{ __('theme.title') }}</h2>
+            <x-theme-switcher />
+        </div>
+    </section>
+
     <p class="mt-4 text-center text-xs text-muted">{{ __('account.admin_edit_note') }}</p>
 
     <form method="POST" action="{{ route('logout') }}" class="mt-3">

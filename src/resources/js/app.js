@@ -16,6 +16,8 @@ function syncThemeColor() {
 
 syncThemeColor();
 window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', syncThemeColor);
+// Re-sync the browser UI colour when the user switches Light/Dark/System (theme-switcher).
+window.addEventListener('themechange', syncThemeColor);
 
 // PWA service worker registration (foundation only; full caching strategy in Phase M).
 if ('serviceWorker' in navigator) {

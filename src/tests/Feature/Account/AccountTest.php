@@ -16,6 +16,14 @@ it('shows the read-only account page with persistent profile and address', funct
         ->assertSee('منطقة الحساب');
 });
 
+it('offers a Light/Dark/System theme switcher on the account page', function () {
+    $this->actingAs(Customer::factory()->onboarded()->create(), 'customer')->get('/account')
+        ->assertOk()
+        ->assertSee('فاتح')
+        ->assertSee('داكن')
+        ->assertSee('حسب النظام');
+});
+
 it('no longer exposes customer self-edit routes (admin-only editing)', function () {
     expect(\Illuminate\Support\Facades\Route::has('account.profile'))->toBeFalse()
         ->and(\Illuminate\Support\Facades\Route::has('account.address'))->toBeFalse();

@@ -72,9 +72,39 @@
     --gradient-brand-mixed: linear-gradient(135deg, var(--color-brand-blue-950) 0%, var(--color-brand-blue-600) 52%, var(--color-brand-green-500) 100%);
 }
 
-/* ---- System dark mode (skill §5) — override the same semantic variables ---- */
+/* ---- Dark mode tokens (prompt 48 §6: Light / Dark / System) ----
+ * Applied when the user explicitly picks Dark (`html[data-theme="dark"]`) OR when following the
+ * OS in System/unset mode (`prefers-color-scheme: dark` and not forced light/dark). Explicit
+ * Light (`html[data-theme="light"]`) always keeps the default :root light tokens above. */
+:root[data-theme="dark"] {
+    --color-canvas: #07101d;
+    --color-surface: #0c1727;
+    --color-surface-elevated: #122238;
+    --color-surface-muted: #101d2f;
+
+    --color-content: #f3f7fb;
+    --color-muted: #a9b7c8;
+    --color-inverse: #ffffff;
+
+    --color-border: #243750;
+    --color-border-strong: #35506e;
+
+    --color-primary: #098fdc;
+    --color-primary-strong: #58bdf0;
+    --color-primary-soft: #0264b1;
+
+    --color-success: #46a831;
+    --color-success-soft: #6ccb58;
+
+    --color-focus: #58bdf0;
+
+    --shadow-card: 0 8px 28px rgb(0 0 0 / 0.28);
+    --shadow-elevated: 0 16px 42px rgb(0 0 0 / 0.38);
+}
+
 @media (prefers-color-scheme: dark) {
-    :root {
+    /* System/unset mode follows the OS. Explicit light/dark are handled by [data-theme] above. */
+    :root:not([data-theme="light"]):not([data-theme="dark"]) {
         --color-canvas: #07101d;
         --color-surface: #0c1727;
         --color-surface-elevated: #122238;
