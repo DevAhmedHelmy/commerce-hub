@@ -7,6 +7,9 @@ use App\Domain\Auth\Providers\LogOtpProvider;
 use App\Models\DeliveryArea;
 use App\Models\DeliveryDiscountRule;
 use App\Models\DeliverySlot;
+use App\Models\LandingPageSetting;
+use App\Models\LandingSection;
+use App\Models\LandingSectionItem;
 use App\Models\Product;
 use App\Models\ProductOffer;
 use App\Models\ProductPriceTier;
@@ -17,6 +20,7 @@ use App\Models\User;
 use App\Observers\DeliveryAreaObserver;
 use App\Observers\DeliveryDiscountRuleObserver;
 use App\Observers\DeliverySlotObserver;
+use App\Observers\LandingObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductOfferObserver;
 use App\Observers\ProductPriceTierObserver;
@@ -66,6 +70,9 @@ class AppServiceProvider extends ServiceProvider
         DeliveryArea::observe(DeliveryAreaObserver::class);
         DeliverySlot::observe(DeliverySlotObserver::class);
         DeliveryDiscountRule::observe(DeliveryDiscountRuleObserver::class);
+        LandingPageSetting::observe(LandingObserver::class);
+        LandingSection::observe(LandingObserver::class);
+        LandingSectionItem::observe(LandingObserver::class);
 
         // RBAC (prompt 40): super_admin bypasses every ability; the package Role model lives
         // outside policy auto-discovery, so its policy is registered explicitly.

@@ -29,6 +29,7 @@ class RolesAndPermissionsSeeder extends Seeder
         'customers.view',
         'delivery.view', 'delivery.manage_areas', 'delivery.manage_slots', 'delivery.manage_discounts',
         'settings.view', 'settings.update',
+        'landing.view', 'landing.manage',
         'audit.view',
         'admin_users.view', 'admin_users.create', 'admin_users.update', 'admin_users.deactivate',
         'roles.view', 'roles.manage',

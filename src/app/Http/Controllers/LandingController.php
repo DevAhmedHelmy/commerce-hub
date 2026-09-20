@@ -4,50 +4,45 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Domain\Catalog\CatalogService;
-use App\Domain\Settings\SettingsService;
-use App\Models\Product;
-use App\Models\ProductOffer;
-use Illuminate\Support\Carbon;
+use App\Domain\Landing\LandingPageService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * Public Arabic landing page (US10). Reuses real catalog/offers/settings; renders gracefully when
- * empty. Featured = products with an active in-range offer only. CTA routes to sign-in.
+ * Public landing page + system-controlled PWA entry (prompt 46). `/` always renders the landing
+ * (never auto-redirects). The primary CTA target is application-controlled (never an admin URL):
+ * guest → login; authenticated but not onboarded → onboarding; onboarded → app home.
  */
 class LandingController extends Controller
 {
-    public function __construct(
-        private readonly CatalogService $catalog,
-        private readonly SettingsService $settings,
-    ) {
+    public function __construct(private readonly LandingPageService $landing)
+    {
     }
 
     public function index(): View
     {
-        $now = Carbon::now();
-
-        $offeredProductIds = ProductOffer::query()
-            ->where('is_active', true)
-            ->where('starts_at', '<=', $now)
-            ->where('ends_at', '>=', $now)
-            ->with('productUnit:id,product_id')
-            ->get()
-            ->pluck('productUnit.product_id')
-            ->filter()
-            ->unique()
-            ->take(8);
-
-        $featured = Product::query()
-            ->visible()
-            ->whereIn('id', $offeredProductIds)
-            ->with(['units'])
-            ->get();
-
         return view('landing.index', [
-            'categories' => $this->catalog->activeCategories(),
-            'featured' => $featured,
-            'business' => $this->settings->businessInfo(),
+            'settings' => $this->landing->settings(),
+            'sections' => $this->landing->sections(),
+            'categories' => $this->landing->categories(),
+            'featured' => $this->landing->featuredProducts(),
         ]);
+    }
+
+    /** System-controlled CTA entry into the customer app/auth/onboarding flow. */
+    public function start(): RedirectResponse
+    {
+        $customer = Auth::guard('customer')->user();
+
+        if ($customer === null) {
+            return redirect()->route('login');
+        }
+
+        if (! $customer->hasCompletedOnboarding()) {
+            return redirect()->route('onboarding.profile');
+        }
+
+        return redirect()->route('home');
     }
 }

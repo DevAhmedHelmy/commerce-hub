@@ -37,8 +37,47 @@ class DemoSeeder extends Seeder
         $this->settings();
         $this->delivery();
         $this->catalog($units);
+        $this->landing();
         $this->adminUser();
         $this->sampleOrders();
+    }
+
+    /** Default landing settings + sections + marketing items (idempotent; never overwrites admin edits). */
+    private function landing(): void
+    {
+        \App\Models\LandingPageSetting::firstOrCreate(['id' => 1], [
+            'site_title_ar' => 'إمداد',
+            'hero_title_ar' => 'مستلزمات مطعمك تصلك بسهولة',
+            'hero_subtitle_ar' => 'اطلب بالجملة بأسعار مناسبة وتوصيل سريع — الدفع عند الاستلام.',
+            'primary_cta_label_ar' => 'ابدأ الطلب',
+            'phone' => '01000000000',
+            'whatsapp_phone' => '01000000000',
+            'is_active' => true,
+        ]);
+
+        $sections = [
+            ['hero', 'ابدأ الطلب', 0, null],
+            ['categories', 'التصنيفات', 1, ['limit' => 8]],
+            ['featured_products', 'عروض مميزة', 2, ['limit' => 8]],
+            ['features', 'لماذا إمداد؟', 3, null],
+            ['contact', 'تواصل معنا', 4, null],
+        ];
+        foreach ($sections as [$key, $title, $order, $settings]) {
+            \App\Models\LandingSection::firstOrCreate(['key' => $key], [
+                'title_ar' => $title, 'is_active' => true, 'sort_order' => $order, 'settings' => $settings,
+            ]);
+        }
+
+        $features = \App\Models\LandingSection::where('key', 'features')->first();
+        if ($features !== null && $features->items()->doesntExist()) {
+            foreach ([
+                ['أسعار جملة تنافسية', '🏷️'],
+                ['توصيل لمناطق مختارة', '🚚'],
+                ['الدفع عند الاستلام', '💵'],
+            ] as $i => [$title, $icon]) {
+                $features->items()->create(['title_ar' => $title, 'icon' => $icon, 'is_active' => true, 'sort_order' => $i]);
+            }
+        }
     }
 
     /** A demo customer with a few orders across statuses, for dashboard/order-screen review. */

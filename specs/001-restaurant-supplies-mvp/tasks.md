@@ -437,9 +437,10 @@ the last super_admin is protected; business rules hold regardless of permissions
 ### Implementation
 
 - [x] T111 [US10] Landing controller + `GET /` route (reuse CatalogService/PromotionService/SettingsService) in `src/app/Http/Controllers/LandingController.php` and `src/routes/web.php`
-- [x] T112 [P] [US10] Landing Blade C01 — header, hero, categories preview, offers, benefits, ordering steps, delivery coverage, CTA, footer/contact (no CMS) in `src/resources/views/landing/` (RTL, empty-safe)
+- [x] T112 [P] [US10] Landing Blade C01 — header, hero, categories preview, offers, benefits, ordering steps, delivery coverage, CTA, footer/contact in `src/resources/views/landing/` (RTL, empty-safe)
+- [x] TL-cms [US10] *(prompt 46)* Backend-controlled landing: `landing_page_settings`/`landing_sections`/`landing_section_items` + `LandingPageService` (cached, dynamic Categories/Featured from real models), system-controlled CTA (`/start`: guest→login, onboarded→home, incomplete→onboarding), Filament management (settings page + sections resource + items, `landing.view`/`landing.manage` RBAC), audit + cache-flush observers, idempotent seed; tests (CTA flow, section visibility/order, dynamic data, unsafe-link rejection, RBAC, audit)
 
-**Checkpoint**: Public landing page live and linked to sign-in.
+**Checkpoint**: Public admin-controlled landing page live; CTA enters the customer PWA flow.
 
 ---
 

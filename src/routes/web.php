@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\LandingController;
 
-// Public landing page (US10 / Phase L).
+// Public landing page + system-controlled PWA entry (US10 / prompt 46).
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/start', [LandingController::class, 'start'])->name('landing.start');
 
 /*
 |--------------------------------------------------------------------------
