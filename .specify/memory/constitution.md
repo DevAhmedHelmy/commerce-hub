@@ -30,7 +30,7 @@ Templates requiring updates:
   ✅ .specify/templates/tasks-template.md  — Test-task and phase structure is
        compatible; Principle VII makes business-logic test tasks non-optional
        (see note below), which /speckit-tasks must honor.
-  ⚠  Runtime guidance (README.md / docs/quickstart.md) — none present yet;
+  ⚠  Runtime guidance (README.md / quickstart.md) — none present yet;
        create when the first feature plan is written (no action now).
 
 Follow-up TODOs: none. All placeholders resolved.

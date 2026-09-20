@@ -56,7 +56,7 @@ specs/001-restaurant-supplies-mvp/tasks.md
 
 all files under specs/001-restaurant-supplies-mvp/design/
 
-all files under docs/prompts/ in numeric order
+all files under prompts/ in numeric order
 
 Later-numbered prompts supersede earlier decisions where they explicitly changed them.
 
@@ -74,7 +74,7 @@ restaurant-supplies-pwa/
 ├── .gitignore
 ├── .specify/
 ├── specs/
-├── docs/
+├── 
 │   └── prompts/
 ├── src/
 │   └── Laravel application
@@ -280,9 +280,9 @@ Do NOT ignore:
 
 specs/
 
-docs/
 
-docs/prompts/
+
+prompts/
 
 CLAUDE.md
 

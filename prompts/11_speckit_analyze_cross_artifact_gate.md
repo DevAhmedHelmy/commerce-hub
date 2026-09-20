@@ -48,7 +48,7 @@ specs/001-restaurant-supplies-mvp/quickstart.md
 
 specs/001-restaurant-supplies-mvp/tasks.md
 
-all files under docs/prompts/ in numeric order
+all files under prompts/ in numeric order
 
 Later-numbered prompts supersede earlier prompts where they explicitly changed prior decisions.
 
@@ -59,7 +59,7 @@ Verify all implementation artifacts consistently assume:
 repository root/
 ├── .specify/
 ├── specs/
-├── docs/
+├── 
 │   └── prompts/
 └── src/
     └── Laravel application

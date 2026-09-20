@@ -49,7 +49,7 @@ specs/001-restaurant-supplies-mvp/quickstart.md
 
 all files under specs/001-restaurant-supplies-mvp/design/
 
-all prompt-history files under docs/prompts/ in numeric order
+all prompt-history files under prompts/ in numeric order
 
 Later-numbered prompts supersede earlier prompts where they explicitly change a prior decision.
 
@@ -66,7 +66,7 @@ Expected structure:
 restaurant-supplies-pwa/
 ├── .specify/
 ├── specs/
-├── docs/
+├── 
 │   └── prompts/
 ├── src/
 │   └── Laravel application

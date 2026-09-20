@@ -145,6 +145,6 @@ releases/
 # ---------------------------------------------------------
 !.specify/
 !specs/
-!docs/
-!docs/prompts/
+!
+!prompts/
 !CLAUDE.md
