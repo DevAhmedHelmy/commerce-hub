@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Domain\Auth\Contracts\OtpProvider;
 use App\Domain\Auth\Providers\LogOtpProvider;
+use App\Models\DeliveryArea;
+use App\Models\DeliveryDiscountRule;
+use App\Models\DeliverySlot;
 use App\Models\Product;
 use App\Models\ProductOffer;
 use App\Models\ProductPriceTier;
@@ -11,6 +14,9 @@ use App\Models\ProductUnit;
 use App\Models\Setting;
 use App\Models\Unit;
 use App\Models\User;
+use App\Observers\DeliveryAreaObserver;
+use App\Observers\DeliveryDiscountRuleObserver;
+use App\Observers\DeliverySlotObserver;
 use App\Observers\ProductObserver;
 use App\Observers\ProductOfferObserver;
 use App\Observers\ProductPriceTierObserver;
@@ -57,6 +63,9 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         ProductPriceTier::observe(ProductPriceTierObserver::class);
         ProductOffer::observe(ProductOfferObserver::class);
+        DeliveryArea::observe(DeliveryAreaObserver::class);
+        DeliverySlot::observe(DeliverySlotObserver::class);
+        DeliveryDiscountRule::observe(DeliveryDiscountRuleObserver::class);
 
         // RBAC (prompt 40): super_admin bypasses every ability; the package Role model lives
         // outside policy auto-discovery, so its policy is registered explicitly.
