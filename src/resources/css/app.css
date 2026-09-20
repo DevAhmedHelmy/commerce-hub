@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+
+/* Design tokens live in one place (restaurant-ui skill §2). theme.css is the human-editable
+   source of truth for brand colors, semantic tokens, dark mode, radii and shadows. */
+@import './theme.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
